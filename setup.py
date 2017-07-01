@@ -14,7 +14,6 @@ setup(name='adagio',
       author='nekopuni',
       author_email='nekopuni@gmail.com',
       license='MIT',
-      packages=['adagio'],
       install_requires=[
           'numpy',
           'pandas',
