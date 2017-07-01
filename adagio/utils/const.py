@@ -4,7 +4,6 @@ import os
 
 ROOT_DIRECTORY = os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                 os.path.pardir,
                  os.path.pardir)
 )
 DATA_DIRECTORY = "{}/data/".format(ROOT_DIRECTORY)

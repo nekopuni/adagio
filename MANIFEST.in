@@ -1,5 +1,1 @@
 graft adagio
-graft data
-
-include data/cash_rate/eur/*.csv
-include data/cash_rate/jpy/*.csv
