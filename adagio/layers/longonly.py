@@ -66,6 +66,14 @@ class LongOnly(BaseStrategy):
         return (self.aggregate_contract_returns(is_gross=False)
                 .rename('final_net_returns ({})'.format(self.name)))
 
+    @property
+    def final_positions(self):
+        """ Return aggregated positions for long-only returns """
+        return (pd.concat([c.final_positions
+                           for c in self.contracts], axis=1)
+                .sum(axis=1)
+                .rename('final_positions ({})'.format(self.name)))
+
     def aggregate_contract_returns(self, is_gross):
         """ Sum up contract returns """
         return (pd.concat([c.final_returns(is_gross=is_gross)

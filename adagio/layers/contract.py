@@ -95,7 +95,7 @@ class Contract(BaseStrategy):
         trade_amount = (self.final_positions.diff()
                         .shift(-1)  # trading lag is already added to positions
                         .fillna(0.0)
-                        .abs().clip(lower=1.0))
+                        .abs())
 
         # initial entry
         start_date = self.data.index[0]

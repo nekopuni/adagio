@@ -72,8 +72,7 @@ class Engine(object):
         LongOnly, this returns each futures gross strategy returns.
         If the first layer is Engine, then this returns each Engine's 
         gross performance """
-        return pd.concat([item.final_gross_returns
-                          for item in self[0]], axis=1)
+        return pd.concat([item.final_gross_returns for item in self[0]], axis=1)
 
     @property
     def sub_net_returns(self):
@@ -81,8 +80,21 @@ class Engine(object):
         LongOnly, this returns each futures net strategy returns.
         If the first layer is Engine, then this returns each Engine's 
         net performance """
-        return pd.concat([item.final_net_returns
-                          for item in self[0]], axis=1)
+        return pd.concat([item.final_net_returns for item in self[0]], axis=1)
+
+    @property
+    def final_positions(self):
+        """ Return strategy positions. This will be used if the first layer of 
+        Engine consists of Engines """
+        return self.sub_positions
+
+    @property
+    def sub_positions(self):
+        """ Return strategy positions. If the first layer consists of 
+        LongOnly, this returns each futures aggregated positions.
+        If the first layer is Engine, then this returns each Engine's 
+        positions """
+        return pd.concat([item.final_positions for item in self[0]], axis=1)
 
     def add(self, other):
         """ Append an element to the layer """
