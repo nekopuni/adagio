@@ -1,5 +1,5 @@
 import re
-from adagio.utils.decorators import check_quandl_ticker
+from .decorators import check_quandl_ticker
 
 
 @check_quandl_ticker

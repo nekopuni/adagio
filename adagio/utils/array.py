@@ -1,4 +1,5 @@
-from adagio.utils.hash import to_hash
+from .dict import merge_dicts
+from .hash import to_hash
 
 
 def traverse(o, tree_types=(list, tuple)):
@@ -15,7 +16,7 @@ def merge_params(params1, params2):
     """ Merge two parameter sets in dictionary """
     if all([key1 not in params2 for key1 in params1]):
         # if keys in params1 and params2 are mutually exclusive
-        return {**params1, **params2}
+        return merge_dicts(params1, params2)
 
     else:
         combined = dict()

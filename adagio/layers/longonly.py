@@ -9,6 +9,7 @@ from .contract import Contract
 from ..utils import keys
 from ..utils.const import FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth
 from ..utils.date import date_shift
+from ..utils.dict import merge_dicts
 from ..utils.logging import get_logger
 from ..utils.quandl import next_fut_ticker, futures_contract_month, year
 
@@ -35,7 +36,7 @@ class LongOnly(BaseStrategy):
             params = copy(backtest_params)
             params[keys.lo_ticker] = ticker
             futures_info = FuturesInfo[ticker].value
-            params = {**params, **futures_info._asdict()}
+            params = merge_dicts(params, futures_info._asdict())
             objs.append(cls(**params))
         return objs
 
