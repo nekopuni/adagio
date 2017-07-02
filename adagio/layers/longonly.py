@@ -96,7 +96,7 @@ class LongOnly(BaseStrategy):
 
             except (quandl.NotFoundError, IndexError):
                 # if the requesting contract is far future
-                # Usually quandl throwd NotFoundError, but sometimes it gets
+                # Usually quandl throws NotFoundError, but sometimes it gets
                 # IndexError.
                 m = FutureContractMonth[futures_contract_month(ticker)]
                 tmp_last_dt = datetime(year(ticker), m.value, 1)
