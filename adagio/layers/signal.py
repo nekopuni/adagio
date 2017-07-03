@@ -33,7 +33,10 @@ class Signal(BaseStrategy):
 
     @property
     def name(self):
-        return self[keys.signal_type]
+        if keys.name in self.backtest_params:
+            return self[keys.name]
+        else:
+            return self[keys.signal_type]
 
     def get_signal_func(self):
         if self[keys.signal_type] == keys.momentum:

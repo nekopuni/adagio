@@ -34,7 +34,10 @@ class BaseScaling(BaseStrategy):
 class VolatilityScaling(BaseScaling):
     @property
     def name(self):
-        return 'volatility_scaling'
+        if keys.name in self.backtest_params:
+            return self[keys.name]
+        else:
+            return 'volatility_scaling'
 
     def backtest(self, other, *args, **kwargs):
         """ Calculate volatility scaling. 'other' can be a list of LongOnly.
@@ -51,7 +54,10 @@ class VolatilityScaling(BaseScaling):
 class PortVolatilityScaling(BaseScaling):
     @property
     def name(self):
-        return 'portfolio_volatility_scaling'
+        if keys.name in self.backtest_params:
+            return self[keys.name]
+        else:
+            return 'portfolio_volatility_scaling'
 
     def backtest(self, others, *args, **kwargs):
         """ Calculate volatility scaling. 'other' can be a list of LongOnly.

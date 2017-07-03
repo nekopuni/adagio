@@ -19,7 +19,10 @@ class Portfolio(BaseStrategy):
 
     @property
     def name(self):
-        return 'portfolio'
+        if keys.name in self.backtest_params:
+            return self[keys.name]
+        else:
+            return 'portfolio'
 
     def backtest(self, other, *args, **kwargs):
         logger.info('Run layers: {}'.format(self))
