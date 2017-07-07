@@ -3,6 +3,8 @@ import unittest
 import adagio
 from adagio import keys
 
+adagio.AdagioConfig.quandl_token = "UyZo7YwAbVVFunCMzHV-"
+
 
 class TestSingleEngine(unittest.TestCase):
     def setUp(self):

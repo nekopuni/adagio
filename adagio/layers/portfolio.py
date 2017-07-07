@@ -29,5 +29,8 @@ class Portfolio(BaseStrategy):
 
         if self[keys.weighting] == keys.equal_weight:
             self.position = 1.0 / len(other)
+        elif isinstance(self[keys.weighting], list):
+            self.position = {lo[keys.lo_ticker]: w
+                             for lo, w in zip(other, self[keys.weighting])}
         else:
             raise NotImplementedError()

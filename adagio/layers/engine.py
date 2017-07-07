@@ -102,6 +102,7 @@ class Engine(object):
         self.layers.append(layer)
 
     def cascade(self, func_name, others=None):
+        """ Look for a layer which has the specified function and run it """
         for layer in self:
             if all([hasattr(i, self.cascade.__name__) for i in layer]):
                 #  in case layer consists of Engine
@@ -121,7 +122,7 @@ class Engine(object):
         This must be called before calling backtest function
         """
         if not all([isinstance(item, (LongOnly, Engine)) for item in self[0]]):
-            raise Exception('The first layer must be composed of either only '
+            raise TypeError('The first layer must be composed of either only '
                             'LongOnly or Engine objects.')
 
         if not self.is_compiled:

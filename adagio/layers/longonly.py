@@ -125,6 +125,11 @@ class LongOnly(BaseStrategy):
                 other_position = pd.Series(other.position,
                                            name=other.name,
                                            index=contract.position.index)
+            elif isinstance(other.position, dict):
+                other_position = other.position[self[keys.lo_ticker]]
+                other_position = pd.Series(other_position,
+                                           name=other.name,
+                                           index=contract.position.index)
             else:
                 raise NotImplementedError()
 
