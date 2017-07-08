@@ -96,6 +96,18 @@ class Engine(object):
         positions """
         return pd.concat([item.final_positions for item in self[0]], axis=1)
 
+    @property
+    def long_onlys(self):
+        """ Return a list of LongOnly names """
+        lo_list = []
+        if all([isinstance(item, LongOnly) for item in self[0]]):
+            for lo in self[0]:
+                lo_list.append(lo.name)
+        elif all([isinstance(item, Engine) for item in self[0]]):
+            for engine in self[0]:
+                lo_list = lo_list + engine.long_onlys
+        return lo_list
+
     def add(self, other):
         """ Append an element to the layer """
         layer = Layer(other)

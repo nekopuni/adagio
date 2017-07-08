@@ -1,6 +1,7 @@
 import pandas as pd
 
 from .base import BaseStrategy
+from .longonly import LongOnly
 from ..utils import keys
 from ..utils.logging import get_logger
 from ..utils.const import ANNUAL_FACTOR
@@ -66,6 +67,9 @@ class PortVolatilityScaling(BaseScaling):
         :return: 
         """
         logger.info('Run layers: {}'.format(self))
+        if isinstance(others, LongOnly):
+            # others only contains one LongOnly object
+            others = [others]
 
         raw_returns = pd.concat([i.final_gross_returns for i in others], axis=1)
         raw_returns = raw_returns.sum(axis=1)

@@ -126,7 +126,7 @@ class LongOnly(BaseStrategy):
                                            name=other.name,
                                            index=contract.position.index)
             elif isinstance(other.position, dict):
-                other_position = other.position[self[keys.lo_ticker]]
+                other_position = other.position[self.name]
                 other_position = pd.Series(other_position,
                                            name=other.name,
                                            index=contract.position.index)

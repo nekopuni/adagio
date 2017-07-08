@@ -1,4 +1,6 @@
 from .base import BaseStrategy
+from .engine import Engine
+from .longonly import LongOnly
 from ..utils.logging import get_logger
 from ..utils import keys
 
@@ -28,9 +30,23 @@ class Portfolio(BaseStrategy):
         logger.info('Run layers: {}'.format(self))
 
         if self[keys.weighting] == keys.equal_weight:
+            if isinstance(other, LongOnly):
+                # portfolio only contains one LongOnly object
+                other = [other]
             self.position = 1.0 / len(other)
+
         elif isinstance(self[keys.weighting], list):
-            self.position = {lo[keys.lo_ticker]: w
-                             for lo, w in zip(other, self[keys.weighting])}
+            self.position = dict()
+            for item, weight in zip(other, self[keys.weighting]):
+                if isinstance(item, LongOnly):
+                    self.position[item.name] = weight
+                elif isinstance(item, Engine):
+                    lo_list = item.long_onlys
+                    for lo in lo_list:
+                        self.position[lo] = weight
+                else:
+                    raise TypeError('Unexpected object is passed: {}'
+                                    .format(item))
+
         else:
             raise NotImplementedError()
