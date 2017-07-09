@@ -54,7 +54,9 @@ class Engine(object):
         """ Merge backtest params in all layers """
         params = [item.backtest_params for layer in self for item in layer]
         params.append(self.backtest_params)
-        return reduce((lambda x, y: merge_params(x, y)), params)
+        all_params = reduce((lambda x, y: merge_params(x, y)), params)
+        all_params[keys.name] = self.name
+        return all_params
 
     @property
     def final_gross_returns(self):
