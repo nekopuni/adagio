@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from .base import BaseStrategy
+from .base import BaseBacktestObject
 from ..utils import keys
 from ..utils.date import data_asfreq
 from ..utils.logging import get_logger
@@ -9,7 +9,7 @@ from ..utils.logging import get_logger
 logger = get_logger(name=__name__)
 
 
-class Signal(BaseStrategy):
+class Signal(BaseBacktestObject):
     def __init__(self, **backtest_params):
         backtest_params = self.init_params(**backtest_params)
         super(Signal, self).__init__(**backtest_params)

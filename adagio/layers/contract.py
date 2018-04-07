@@ -6,7 +6,7 @@ import numpy as np
 import quandl
 from arctic.exceptions import NoDataFoundException
 
-from .base import BaseStrategy
+from .base import BaseBacktestObject
 from ..utils import keys
 from ..utils.config import AdagioConfig
 from ..utils.const import (FutureContractMonth, Denominator, PriceSkipDates,
@@ -19,16 +19,27 @@ from ..utils.quandl import futures_contract_name, futures_contract_month, year
 logger = get_logger(name=__name__)
 
 
-class Contract(BaseStrategy):
+class QuandlGeneric(BaseBacktestObject):
     def __init__(self, **backtest_params):
-        super(Contract, self).__init__(**backtest_params)
+        super(QuandlGeneric, self).__init__(**backtest_params)
+
+
+class GenericInstrument(BaseBacktestObject):
+    def __init__(self, **backtest_params):
+        super(GenericInstrument, self).__init__(**backtest_params)
+
+
+class QuandlFutures(BaseBacktestObject):
+    def __init__(self, **backtest_params):
+        super(QuandlFutures, self).__init__(**backtest_params)
         self.data = None
         self.roll_date = None
         self.position = None
         self.is_expired = False
 
     def __repr__(self):
-        return 'Contract({})'.format(self[keys.quandl_ticker])
+        return '{}({})'.format(self.__class__.__name__,
+                               self[keys.quandl_ticker])
 
     @property
     def name(self):
@@ -212,7 +223,7 @@ class Contract(BaseStrategy):
                 return _roll_date_notice
             else:
                 raise ValueError("First notice should be earlier than "
-                                "last trading day.")
+                                 "last trading day.")
 
     def clean_data(self):
         """ Clean erroneous dates """

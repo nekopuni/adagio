@@ -1,4 +1,4 @@
-from .base import BaseStrategy
+from .base import BaseBacktestObject
 from .engine import Engine
 from .longonly import LongOnly
 from ..utils.logging import get_logger
@@ -7,7 +7,7 @@ from ..utils import keys
 logger = get_logger(name=__name__)
 
 
-class Portfolio(BaseStrategy):
+class Portfolio(BaseBacktestObject):
     """ Layer to bind strategies """
 
     def __init__(self, **backtest_params):

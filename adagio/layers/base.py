@@ -1,4 +1,4 @@
-class BaseStrategy(object):
+class BaseBacktestObject(object):
     def __init__(self, **backtest_params):
         self._backtest_params = backtest_params
 

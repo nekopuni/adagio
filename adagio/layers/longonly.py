@@ -4,8 +4,8 @@ from datetime import datetime
 import pandas as pd
 import quandl
 
-from .base import BaseStrategy
-from .contract import Contract
+from .base import BaseBacktestObject
+from .contract import QuandlFutures
 from ..utils import keys
 from ..utils.const import FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth
 from ..utils.date import date_shift
@@ -16,14 +16,14 @@ from ..utils.quandl import next_fut_ticker, futures_contract_month, year
 logger = get_logger(name=__name__)
 
 
-class LongOnly(BaseStrategy):
+class LongOnly(BaseBacktestObject):
     def __init__(self, **backtest_params):
         backtest_params = self.init_params(**backtest_params)
         super(LongOnly, self).__init__(**backtest_params)
         self.contracts = None
 
     def __repr__(self):
-        return 'LongOnly({})'.format(self[keys.lo_ticker])
+        return '{}({})'.format(self.__class__.__name__, self[keys.lo_ticker])
 
     @classmethod
     def _compile(cls, **backtest_params):
@@ -45,6 +45,7 @@ class LongOnly(BaseStrategy):
         """ Initialise parameters """
         backtest_params.setdefault(keys.force_download, False)
         backtest_params.setdefault(keys.slippage, 0.0)
+        backtest_params.setdefault(keys.price_source, keys.pcs_quandl_futures)
         return backtest_params
 
     @property
@@ -85,35 +86,43 @@ class LongOnly(BaseStrategy):
 
     def backtest(self, *args, **kwargs):
         logger.info('Run layers: {}'.format(self))
+        self.contracts = self.get_contracts()
 
-        ticker = self.first_ticker
-        contracts = []
-        start_date = None
+    def get_contracts(self):
+        """ Returns contract objects based on price source """
+        if self[keys.price_source] == keys.pcs_quandl_futures:
+            ticker = self.first_ticker
+            contracts = []
+            start_date = None
 
-        while True:
-            try:
-                params = copy(self.backtest_params)
-                params[keys.quandl_ticker] = ticker  # individual
+            while True:
+                try:
+                    params = copy(self.backtest_params)
+                    params[keys.quandl_ticker] = ticker  # individual
 
-                contract = Contract(**params)
-                end_date = contract.get_roll_date(DEFAULT_ROLL_RULE)
+                    contract = QuandlFutures(**params)
+                    end_date = contract.get_roll_date(DEFAULT_ROLL_RULE)
 
-                contract.backtest(start_date, end_date)
-                start_date = date_shift(end_date, '+1bd')
-                contracts.append(contract)
+                    contract.backtest(start_date, end_date)
+                    start_date = date_shift(end_date, '+1bd')
+                    contracts.append(contract)
 
-            except (quandl.NotFoundError, IndexError):
-                # if the requesting contract is far future
-                # Usually quandl throws NotFoundError, but sometimes it gets
-                # IndexError.
-                m = FutureContractMonth[futures_contract_month(ticker)]
-                tmp_last_dt = datetime(year(ticker), m.value, 1)
-                tmp_last_dt = date_shift(tmp_last_dt, "+MonthEnd")
-                if tmp_last_dt.date() > datetime.today().date():
-                    break
+                except (quandl.NotFoundError, IndexError):
+                    # if the requesting contract is far future
+                    # Usually quandl throws NotFoundError, but sometimes it gets
+                    # IndexError.
+                    m = FutureContractMonth[futures_contract_month(ticker)]
+                    tmp_last_dt = datetime(year(ticker), m.value, 1)
+                    tmp_last_dt = date_shift(tmp_last_dt, "+MonthEnd")
+                    if tmp_last_dt.date() > datetime.today().date():
+                        break
 
-            ticker = next_fut_ticker(ticker, self[keys.roll_schedule])
-        self.contracts = contracts
+                ticker = next_fut_ticker(ticker, self[keys.roll_schedule])
+            self.contracts = contracts
+        else:
+            raise NotImplemented()
+
+        return contracts
 
     def propagate_position(self, other):
         """ Propagate position to individual contract level """

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .base import BaseStrategy
+from .base import BaseBacktestObject
 from .longonly import LongOnly
 from ..utils import keys
 from ..utils.logging import get_logger
@@ -10,7 +10,7 @@ from ..utils.date import data_asfreq
 logger = get_logger(name=__name__)
 
 
-class BaseScaling(BaseStrategy):
+class BaseScaling(BaseBacktestObject):
     def __init__(self, **backtest_params):
         backtest_params = self.init_params(**backtest_params)
         super(BaseScaling, self).__init__(**backtest_params)

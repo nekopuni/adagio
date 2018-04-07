@@ -21,7 +21,7 @@ class Engine(object):
 
     def __repr__(self):
         layers = '\n\t'.join([str(i) for i in self.layers])
-        return 'Engine(\n\t{}\n)'.format(layers)
+        return '{}(\n\t{}\n)'.format(self.__class__.__name__, layers)
 
     def __iter__(self):
         for layer in self.layers:

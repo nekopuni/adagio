@@ -20,6 +20,11 @@ end_date = 'end_date'
 n_items = 'n_items'
 slippage = 'slippage'
 backtest_ccy = 'backtest_ccy'
+price_source = 'price_source'
+
+# backtest price sources
+pcs_quandl_futures = 'pcs_quandl_futures'
+pcs_quandl_generic = 'pcs_quandl_generic'
 
 # layers params values
 equal_weight = 'equal_weight'
