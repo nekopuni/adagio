@@ -45,7 +45,7 @@ class Signal(BaseStrategy):
             raise NotImplementedError()
 
     def momentum(self, other):
-        raw_returns = other.get_final_gross_returns()
+        raw_returns = other.get_final_net_returns()
         signal = (momentum(raw_returns, self.backtest_params)
                   .rename(self.name))
 

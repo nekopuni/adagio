@@ -73,17 +73,19 @@ class LongOnly(BaseStrategy):
                 .rename('final_positions ({})'.format(self.name)))
 
     def aggregate_contract_returns(self, is_gross):
-        """ Sum up contract returns """
+        """ Sum up returns for each contract
+
+        :param is_gross: bool. If True this gives gross returns otherwise
+        returns after subtracting transaction cost estimates.
+        :return:
+        """
         return (pd.concat([c.get_final_returns(is_gross=is_gross)
                            for c in self.contracts], axis=1)
                 .sum(axis=1))
 
     def backtest(self, *args, **kwargs):
         logger.info('Run layers: {}'.format(self))
-        self.contracts = self.get_contracts()
 
-    def get_contracts(self):
-        """ Return list of contracts starting from first_ticker """
         ticker = self.first_ticker
         contracts = []
         start_date = None
@@ -111,7 +113,7 @@ class LongOnly(BaseStrategy):
                     break
 
             ticker = next_fut_ticker(ticker, self[keys.roll_schedule])
-        return contracts
+        self.contracts = contracts
 
     def propagate_position(self, other):
         """ Propagate position to individual contract level """

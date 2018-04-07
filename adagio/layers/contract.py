@@ -25,7 +25,6 @@ class Contract(BaseStrategy):
         self.data = None
         self.roll_date = None
         self.position = None
-        self.raw_returns = None
         self.is_expired = False
 
     def __repr__(self):
@@ -68,8 +67,8 @@ class Contract(BaseStrategy):
 
     def get_final_positions(self):
         """ Return final position (adjusted by signals etc.) 
-        Trading lags are already shifted so that the final return can be
-        calculated by final_position * raw_returns without any trading lags.
+        Trading lags are already applied so that the final return can be
+        calculated by final_position * returns.
         """
         return self.position.prod(axis=1).rename('final_position')
 
@@ -77,7 +76,7 @@ class Contract(BaseStrategy):
         """ Return final gross returns for its contract using final_positions 
         Any slippage is not deducted.
         """
-        return ((self.raw_returns * self.get_final_positions())
+        return ((self.calc_return() * self.get_final_positions())
                 .rename('final_gross_returns'))
 
     def get_final_net_returns(self):
@@ -88,16 +87,15 @@ class Contract(BaseStrategy):
         every time we trade.
         """
         # trade_amount = 1 if there is a transaction
-        trade_amount = (self.get_final_positions().diff()
+        final_positions = self.get_final_positions()
+        trade_amount = (final_positions.diff()
                         .shift(-1)  # trading lag is already added to positions
                         .fillna(0.0)
                         .abs())
 
-        # initial entry
+        # initial entry if the position is held from start
         start_date = self.data.index[0]
-        trade_amount[start_date] = min(1.0,
-                                       abs(self.get_final_positions()
-                                           [start_date]))
+        trade_amount[start_date] = abs(final_positions[start_date])
 
         cost = (self.price_for_return.pow(-1)
                 .replace([np.inf, -np.inf], np.nan)
@@ -130,19 +128,11 @@ class Contract(BaseStrategy):
 
         # determine base positions based on the roll date
         logger.debug('Determining base positions')
-        self.position = pd.DataFrame(columns=['base'], index=self.data.index)
-
-        if start_date is None:  # TODO use slice
-            self.position.loc[:end_date, 'base'] = 1.0
-        else:
-            self.position.loc[start_date:end_date, 'base'] = 1.0
-        self.position = self.position.fillna(0.0)
+        self.position = pd.DataFrame(0.0, columns=['base'],
+                                     index=self.data.index)
+        self.position.loc[slice(start_date, end_date), 'base'] = 1.0
         self[keys.start_date] = start_date
         self[keys.end_date] = end_date
-
-        # get raw returns (no positions considered)
-        logger.debug('Computing raw returns')
-        self.raw_returns = self.get_return()
 
     def check_if_expired(self, data):
         """ Check if the contract is expired """
@@ -199,7 +189,8 @@ class Contract(BaseStrategy):
         return self.get_date(self[keys.last_trade_date])
 
     def first_notice_date(self):
-        assert self[keys.first_notice_date] is not None
+        if self[keys.first_notice_date] is not None:
+            raise ValueError('{} not found.'.format(keys.first_notice_date))
         return self.get_date(self[keys.first_notice_date])
 
     def get_roll_date(self, roll_rule):
@@ -220,7 +211,7 @@ class Contract(BaseStrategy):
             if _roll_date_notice < _roll_date:
                 return _roll_date_notice
             else:
-                raise Exception("First notice should be earlier than "
+                raise ValueError("First notice should be earlier than "
                                 "last trading day.")
 
     def clean_data(self):
@@ -241,33 +232,12 @@ class Contract(BaseStrategy):
         for return_key in RETURN_KEY_PRIORITY:
             if return_key in self.data.keys():
                 return return_key
-        raise Exception('No return key found. Data contains {}'
-                        .format(self.data.keys()))
+        raise ValueError('No return key found. Data contains {}'
+                         .format(self.data.keys()))
 
-    def _get_return_raw(self):
-        """ Return raw returns according to the denominator.
-        (Fully-collateralised returns)
-        
-        If denominator is not specified, returns are just percentage changes.
-        Other denominators follow the market conventions and/or the data format.
-        """
-        if self[keys.denominator] is None:
-            return self.price_for_return.pct_change().fillna(0)
-        else:
-            if self[keys.denominator] == Denominator.GOVT_FUT.value:
-                return self.price_for_return.diff().div(100.0).fillna(0)
-            elif self[keys.denominator] == Denominator.GOVT_FUT_JGB.value:
-                return self.price_for_return.diff().div(1000.0).fillna(0)
-            elif self[keys.denominator] == Denominator.MM_FUT.value:
-                return (self.price_for_return.diff().div(100.0 * 0.25)
-                        .fillna(0))
-            else:
-                raise Exception("{} is not a valid denominator."
-                                .format(self[keys.denominator]))
-
-    def get_return(self):
+    def calc_return(self):
         """ Calculate returns and clean it if necessary """
-        return_raw = self._get_return_raw()
+        return_raw = self._calc_return_raw()
 
         if self[keys.lo_ticker] in [i.name for i in ReturnSkipDates]:
             fix_date = ReturnSkipDates[self[keys.lo_ticker]].value
@@ -275,10 +245,55 @@ class Contract(BaseStrategy):
                 if d in return_raw.index:
                     return_raw[d] = 0.0
 
-        # TODO convert return into backtest currency
         return_raw = self.convert_return_ccy(return_raw)
 
         return return_raw
+
+    def _calc_return_raw(self):
+        """ Return raw returns according to the denominator.
+        (Fully-collateralised returns)
+        
+        If denominator is not specified, returns are just percentage changes.
+        Other denominators follow the market conventions and/or the data format.
+        """
+        if self[keys.denominator] is None:
+            base_price = self._get_base_price()
+        else:
+            if self[keys.denominator] == Denominator.GOVT_FUT.value:
+                base_price = self._get_base_price(100.0)
+            elif self[keys.denominator] == Denominator.GOVT_FUT_JGB.value:
+                base_price = self._get_base_price(1000.0)
+            elif self[keys.denominator] == Denominator.MM_FUT.value:
+                base_price = self._get_base_price(100.0 * 0.25)
+            else:
+                raise ValueError("{} is not a valid denominator."
+                                 .format(self[keys.denominator]))
+        return self.price_for_return.diff().div(base_price.shift()).fillna(0)
+
+    def _get_base_price(self, constant=None):
+        """ Get base price series that will be used as a denominator
+        for return calculation """
+        if constant is not None:
+            base_price = pd.Series(constant, index=self.position.index)
+        else:
+            final_position = self.get_final_positions()
+            position_change = (final_position
+                               .shift(-1)
+                               .fillna(method='pad')
+                               .diff()
+                               .abs()
+                               .pipe(np.sign))
+            # initial position
+            position_change = (position_change
+                               .fillna(final_position.abs().pipe(np.sign)))
+
+            base_price = (self.price_for_return
+                          .where(position_change == 1)
+                          .fillna(method='pad'))
+
+        # base_return is later shifted by 1 period when multiplied by
+        # price change
+        return base_price
 
     def convert_return_ccy(self, returns):
         """ Convert returns series into the backtest currency 
