@@ -42,6 +42,6 @@ class Layer(object):
                     getattr(item, func_name)(others[0])
 
             else:
-                raise Exception('Lengths mismatch.\n'
-                                'Self = {} while others = {}'
-                                .format(len(self), len(others)))
+                raise ValueError('Lengths mismatch.\n'
+                                 'Self = {} while others = {}'
+                                 .format(len(self), len(others)))

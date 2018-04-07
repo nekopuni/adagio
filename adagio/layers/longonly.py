@@ -55,29 +55,26 @@ class LongOnly(BaseStrategy):
     def first_ticker(self):
         return self[keys.lo_ticker].replace('_', '/') + self[keys.start_from]
 
-    @property
-    def final_gross_returns(self):
+    def get_final_gross_returns(self):
         """ Return gross long-only return series """
         return (self.aggregate_contract_returns(is_gross=True)
                 .rename('final_gross_returns ({})'.format(self.name)))
 
-    @property
-    def final_net_returns(self):
+    def get_final_net_returns(self):
         """ Return net long-only return series """
         return (self.aggregate_contract_returns(is_gross=False)
                 .rename('final_net_returns ({})'.format(self.name)))
 
-    @property
-    def final_positions(self):
+    def get_final_positions(self):
         """ Return aggregated positions for long-only returns """
-        return (pd.concat([c.final_positions
+        return (pd.concat([c.get_final_positions()
                            for c in self.contracts], axis=1)
                 .sum(axis=1)
                 .rename('final_positions ({})'.format(self.name)))
 
     def aggregate_contract_returns(self, is_gross):
         """ Sum up contract returns """
-        return (pd.concat([c.final_returns(is_gross=is_gross)
+        return (pd.concat([c.get_final_returns(is_gross=is_gross)
                            for c in self.contracts], axis=1)
                 .sum(axis=1))
 

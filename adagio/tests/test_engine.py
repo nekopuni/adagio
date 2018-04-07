@@ -160,8 +160,8 @@ class TestMultipleEngine(unittest.TestCase):
         self.assertEqual(position.columns[3], 'portfolio')
         self.assertEqual(position.columns[4], 'portfolio_volatility_scaling')
 
-        engine1_ret = self.engine[0][0].final_gross_returns.sum()
-        engine2_ret = self.engine[0][1].final_gross_returns.sum()
+        engine1_ret = self.engine[0][0].get_final_gross_returns().sum()
+        engine2_ret = self.engine[0][1].get_final_gross_returns().sum()
         self.assertAlmostEqual(engine1_ret, engine2_ret)
-        self.assertAlmostEqual(self.engine.final_gross_returns.sum(),
+        self.assertAlmostEqual(self.engine.get_final_gross_returns().sum(),
                                engine1_ret + engine2_ret)

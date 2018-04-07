@@ -66,33 +66,29 @@ class Contract(BaseStrategy):
         """ Return a series for returns """
         return self.data[self.get_return_key()]
 
-    @property
-    def final_positions(self):
+    def get_final_positions(self):
         """ Return final position (adjusted by signals etc.) 
-        Trading lags are already reflected so that the final return can be 
-        calculated by final_position * raw_returns without any shifts.
+        Trading lags are already shifted so that the final return can be
+        calculated by final_position * raw_returns without any trading lags.
         """
         return self.position.prod(axis=1).rename('final_position')
 
-    @property
-    def final_gross_returns(self):
+    def get_final_gross_returns(self):
         """ Return final gross returns for its contract using final_positions 
         Any slippage is not deducted.
         """
-        return ((self.raw_returns * self.final_positions)
+        return ((self.raw_returns * self.get_final_positions())
                 .rename('final_gross_returns'))
 
-    @property
-    def final_net_returns(self):
+    def get_final_net_returns(self):
         """ Return final net returns for its contract using final_positions 
         
         Cost = tick size * slippage * trade amount / price_t
         trade amount is proportional to the trading size and is at least 1.0
         every time we trade.
         """
-
         # trade_amount = 1 if there is a transaction
-        trade_amount = (self.final_positions.diff()
+        trade_amount = (self.get_final_positions().diff()
                         .shift(-1)  # trading lag is already added to positions
                         .fillna(0.0)
                         .abs())
@@ -100,20 +96,22 @@ class Contract(BaseStrategy):
         # initial entry
         start_date = self.data.index[0]
         trade_amount[start_date] = min(1.0,
-                                       abs(self.final_positions[start_date]))
+                                       abs(self.get_final_positions()
+                                           [start_date]))
 
         cost = (self.price_for_return.pow(-1)
                 .replace([np.inf, -np.inf], np.nan)
                 .fillna(method='pad')
                 .mul(self[keys.tick_size] * self[keys.slippage])
                 .mul(trade_amount))
-        return (self.final_gross_returns - cost).rename('final_net_returns')
+        return ((self.get_final_gross_returns() - cost)
+                .rename('final_net_returns'))
 
-    def final_returns(self, is_gross=True):
+    def get_final_returns(self, is_gross=True):
         if is_gross:
-            return self.final_gross_returns
+            return self.get_final_gross_returns()
         else:
-            return self.final_net_returns
+            return self.get_final_net_returns()
 
     def backtest(self, start_date, end_date, *args, **kwargs):
         """ Get data from Quandl and clean it. Positions are calculated
@@ -134,7 +132,7 @@ class Contract(BaseStrategy):
         logger.debug('Determining base positions')
         self.position = pd.DataFrame(columns=['base'], index=self.data.index)
 
-        if start_date is None:
+        if start_date is None:  # TODO use slice
             self.position.loc[:end_date, 'base'] = 1.0
         else:
             self.position.loc[start_date:end_date, 'base'] = 1.0
@@ -299,7 +297,7 @@ class Contract(BaseStrategy):
             symbols = library.list_symbols(regex=self[keys.contract_ccy])
 
             if len(symbols) > 1:
-                raise Exception('Multiple fx rates found')
+                raise ValueError('Multiple fx rates found')
 
             fx_rates = library.read(symbols[0])
             fx_rates = fx_rates.data

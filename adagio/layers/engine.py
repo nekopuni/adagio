@@ -58,48 +58,41 @@ class Engine(object):
         all_params[keys.name] = self.name
         return all_params
 
-    @property
-    def final_gross_returns(self):
-        return (self.sub_gross_returns.sum(axis=1)
+    def get_final_gross_returns(self):
+        return (self.get_sub_gross_returns().sum(axis=1)
                 .rename('final_gross_returns ({})'.format(self.name)))
 
-    @property
-    def final_net_returns(self):
-        return (self.sub_net_returns.sum(axis=1)
+    def get_final_net_returns(self):
+        return (self.get_sub_net_returns().sum(axis=1)
                 .rename('final_net_returns ({})'.format(self.name)))
 
-    @property
-    def sub_gross_returns(self):
+    def get_sub_gross_returns(self):
         """ Return strategy gross sub-returns. If the first layer consists of 
         LongOnly, this returns each futures gross strategy returns.
         If the first layer is Engine, then this returns each Engine's 
         gross performance """
-        return pd.concat([item.final_gross_returns for item in self[0]], axis=1)
+        return pd.concat([item.get_final_gross_returns() for item in self[0]], axis=1)
 
-    @property
-    def sub_net_returns(self):
+    def get_sub_net_returns(self):
         """ Return strategy net sub-returns. If the first layer consists of 
         LongOnly, this returns each futures net strategy returns.
         If the first layer is Engine, then this returns each Engine's 
         net performance """
-        return pd.concat([item.final_net_returns for item in self[0]], axis=1)
+        return pd.concat([item.get_final_net_returns() for item in self[0]], axis=1)
 
-    @property
-    def final_positions(self):
+    def get_final_positions(self):
         """ Return strategy positions. This will be used if the first layer of 
-        Engine consists of Engines """
-        return self.sub_positions
+        Engine consists of Engine instance(s) """
+        return self.get_sub_positions()
 
-    @property
-    def sub_positions(self):
+    def get_sub_positions(self):
         """ Return strategy positions. If the first layer consists of 
         LongOnly, this returns each futures aggregated positions.
         If the first layer is Engine, then this returns each Engine's 
         positions """
-        return pd.concat([item.final_positions for item in self[0]], axis=1)
+        return pd.concat([item.get_final_positions() for item in self[0]], axis=1)
 
-    @property
-    def long_onlys(self):
+    def get_long_only_names(self):
         """ Return a list of LongOnly names """
         lo_list = []
         if all([isinstance(item, LongOnly) for item in self[0]]):
@@ -107,7 +100,10 @@ class Engine(object):
                 lo_list.append(lo.name)
         elif all([isinstance(item, Engine) for item in self[0]]):
             for engine in self[0]:
-                lo_list = lo_list + engine.long_onlys
+                lo_list = lo_list + engine.get_long_only_names()
+        else:
+            raise TypeError('Unknown the first layer type. Got {}'
+                            .format(self[0]))
         return lo_list
 
     def add(self, other):
@@ -143,6 +139,7 @@ class Engine(object):
             for layer_idx, layer in enumerate(self):
                 try:
                     # if layer consists of Engine
+                    # TODO check if layer is Engine instance?
                     layer.run("compile")
                 except AttributeError:
                     if layer_idx > 0:
@@ -157,7 +154,7 @@ class Engine(object):
             self.is_compiled = True
 
     def backtest(self):
-        """ Run the layers by calling layers function in the layers in order """
+        """ Run the layers by calling their functions in order """
 
         self.compile()
         root_layer = self[0]

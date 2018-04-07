@@ -47,7 +47,7 @@ class VolatilityScaling(BaseScaling):
         :return: 
         """
         logger.info('Run layers: {}'.format(self))
-        raw_returns = other.final_gross_returns
+        raw_returns = other.get_final_gross_returns()  # todo why use gross returns?
         self.position = (volatility_scale(raw_returns, self.backtest_params)
                          .rename(self.name))
 
@@ -71,7 +71,7 @@ class PortVolatilityScaling(BaseScaling):
             # others only contains one LongOnly object
             others = [others]
 
-        raw_returns = pd.concat([i.final_gross_returns for i in others], axis=1)
+        raw_returns = pd.concat([i.get_final_gross_returns() for i in others], axis=1)
         raw_returns = raw_returns.sum(axis=1)
         self.position = (volatility_scale(raw_returns, self.backtest_params)
                          .rename(self.name))

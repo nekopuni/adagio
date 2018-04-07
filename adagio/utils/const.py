@@ -104,7 +104,7 @@ class FuturesInfo(Enum):
     SGX_NK = futures_info("Nikkei 225 Index", AssetClass.EQUITY_FUT.value,
                           "Z2013", None, 5, "JPY",
                           ["H", "M", "U", "Z"],
-                          None, "-Thu+Thu+Thu")
+                          None, "-Thu+Thu+Thu-2bd")  # sometimes prices are missing
     CME_NK = futures_info("Nikkei 225 Index USD", AssetClass.EQUITY_FUT.value,
                           "Z1990", None, 5, "USD",
                           ["H", "M", "U", "Z"],
@@ -477,6 +477,7 @@ class PriceSkipDates(Enum):
               "2014-02-24", "2014-02-25", "2014-02-26", "2014-02-27",
               "2014-02-28", "2014-03-03", "2014-03-04", "2014-03-05",
               "2014-03-06", "2014-03-07", "2014-03-11", "2014-03-12"]
+    SGX_NK = ['2018-01-26', '2018-01-29', '2018-01-30', '2018-02-16']
 
 
 class ReturnSkipDates(Enum):

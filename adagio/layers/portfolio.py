@@ -41,7 +41,7 @@ class Portfolio(BaseStrategy):
                 if isinstance(item, LongOnly):
                     self.position[item.name] = weight
                 elif isinstance(item, Engine):
-                    lo_list = item.long_onlys
+                    lo_list = item.get_long_only_names()
                     for lo in lo_list:
                         self.position[lo] = weight
                 else:
