@@ -53,7 +53,6 @@ class AssetClass(Enum):
 
 class Denominator(Enum):
     GOVT_FUT = 'government_bond_futures'
-    GOVT_FUT_JGB = 'government_bond_futures_jgb'
     MM_FUT = 'money_market_futures'
 
 
@@ -253,7 +252,7 @@ class FuturesInfo(Enum):
     # sometimes data on last trading data are missing.
     SGX_JB = futures_info("10-year Mini Japanese Government Bond",
                           AssetClass.GOVT_FUT.value,
-                          "Z2013", Denominator.GOVT_FUT_JGB.value, 0.01, "JPY",
+                          "Z2013", Denominator.GOVT_FUT.value, 0.01, "JPY",
                           ["H", "M", "U", "Z"],
                           None, "+19d-1bd+1bd-5bd-5bd")
     # Money market futures
@@ -338,10 +337,6 @@ class FuturesInfo(Enum):
                            "H2014", None, 0.0001, "CNH",
                            ["H", "M", "U", "Z"],
                            None, "-1Wed+1Wed+2Wed-2bd")
-    DGCX_DINR = futures_info("Indian Rupee", AssetClass.FX_FUT.value,
-                             "K2013", None, 0.01, "USD",
-                             [m.name for m in FutureContractMonth],
-                             None, "+BMonthEnd-2bd")
     # CME - Commodity
     # Grains https://www.cmegroup.com/trading/agricultural/files/
     # AC-268_Grains_FC_FINAL_SR.pdf
@@ -470,14 +465,11 @@ class FuturesInfo(Enum):
 class PriceSkipDates(Enum):
     ICE_RV = ["2014-04-15"]
     ICE_RG = ["2014-04-15"]
-    CME_ND = ["2013-06-04", "2013-06-05", "2013-06-06", "2013-06-07",
-              "2014-06-06"]
     LIFFE_BXF = ["2015-08-05"]
-    CME_RU = ["2013-10-04", "2014-02-19", "2014-02-20", "2014-02-21",
-              "2014-02-24", "2014-02-25", "2014-02-26", "2014-02-27",
-              "2014-02-28", "2014-03-03", "2014-03-04", "2014-03-05",
-              "2014-03-06", "2014-03-07", "2014-03-11", "2014-03-12"]
-    SGX_NK = ['2018-01-26', '2018-01-29', '2018-01-30', '2018-02-16']
+    SGX_NK = ['2018-01-26', '2018-01-29', '2018-01-30']
+    SGX_IN = ['2018-01-26']
+    SGX_CN = ['2018-01-26']
+    EUREX_FBTP = ['2009-09-01']
 
 
 class ReturnSkipDates(Enum):

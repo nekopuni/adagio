@@ -200,7 +200,7 @@ class QuandlFutures(BaseBacktestObject):
         return self.get_date(self[keys.last_trade_date])
 
     def first_notice_date(self):
-        if self[keys.first_notice_date] is not None:
+        if self[keys.first_notice_date] is None:
             raise ValueError('{} not found.'.format(keys.first_notice_date))
         return self.get_date(self[keys.first_notice_date])
 
@@ -227,16 +227,26 @@ class QuandlFutures(BaseBacktestObject):
 
     def clean_data(self):
         """ Clean erroneous dates """
+        cleaned_data = self.data
+
         if self[keys.lo_ticker] in PriceSkipDates.__members__.keys():
             dates = PriceSkipDates[self[keys.lo_ticker]].value
             skip_dates = pd.DatetimeIndex(dates)
-            to_nan = [t for t in skip_dates if t in self.data.index]
-            self.data.loc[to_nan] = None
-            return self.data.fillna(method="pad")
+            to_nan = [t for t in skip_dates if t in cleaned_data.index]
+            cleaned_data.loc[to_nan] = None
+            cleaned_data = (cleaned_data
+                            .fillna(method='pad')
+                            .fillna(method='bfill'))
+
+        # remove when all prices are zero or negative for some reason
+        flgs = self.price_for_return > 0
+        cleaned_data = (cleaned_data.where(flgs).fillna(method='pad')
+                        .fillna(method='bfill'))
 
         if self[keys.lo_ticker] in __fut_clean_func__.keys():
-            self.data = __fut_clean_func__[self[keys.lo_ticker]](self.data)
-        return self.data
+            cleaned_data = __fut_clean_func__[self[keys.lo_ticker]](
+                cleaned_data)
+        return cleaned_data
 
     def get_return_key(self):
         """ Return a column name used to be used for calculating returns """
@@ -272,8 +282,6 @@ class QuandlFutures(BaseBacktestObject):
         else:
             if self[keys.denominator] == Denominator.GOVT_FUT.value:
                 base_price = self._get_base_price(100.0)
-            elif self[keys.denominator] == Denominator.GOVT_FUT_JGB.value:
-                base_price = self._get_base_price(1000.0)
             elif self[keys.denominator] == Denominator.MM_FUT.value:
                 base_price = self._get_base_price(100.0 * 0.25)
             else:
@@ -346,10 +354,11 @@ class QuandlFutures(BaseBacktestObject):
             return (returns * fx_adj).rename(returns.name)
 
 
-def _drop_zero(df, key):
-    return df.query("{} != 0".format(key))
+def _clean_jgb_prices(df):
+    df[:'2018-01-18'] *= 0.1
+    return df
 
 
 __fut_clean_func__ = {
-    FuturesInfo.SGX_CN.name: partial(_drop_zero, key="Settle")
+    FuturesInfo.SGX_JB.name: _clean_jgb_prices
 }
