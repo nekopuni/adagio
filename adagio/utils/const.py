@@ -6,7 +6,7 @@ ROOT_DIRECTORY = os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)),
                  os.path.pardir)
 )
-DATA_DIRECTORY = "{}/data/".format(ROOT_DIRECTORY)
+DATA_DIRECTORY = os.path.join(ROOT_DIRECTORY, 'data')
 
 # ------------------------------------------------------------------------------
 # For general backtest information
