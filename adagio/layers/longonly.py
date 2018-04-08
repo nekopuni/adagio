@@ -73,6 +73,26 @@ class LongOnly(BaseBacktestObject):
                 .sum(axis=1)
                 .rename('final_positions ({})'.format(self.name)))
 
+    def get_all_prices(self, date_range=None, keys=None):
+        """ Return concatenated price data from all contracts
+
+        :param keys: list of key names. If None price data to compute returns
+        is retrieved.
+        :return:
+        """
+        if keys is None:
+            all_prices = pd.concat([i.price_for_return
+                                    for i in self.contracts], axis=1)
+        else:
+            all_prices = pd.concat([i.data[keys]
+                                    for i in self.contracts], axis=1)
+
+        if date_range is not None:
+            all_prices = all_prices.loc[date_range, :]
+
+        all_prices.columns = [i.name for i in self.contracts]
+        return all_prices.dropna(how='all', axis=1)
+
     def aggregate_contract_returns(self, is_gross):
         """ Sum up returns for each contract
 
