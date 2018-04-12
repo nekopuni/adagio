@@ -169,6 +169,70 @@ class FuturesInfo(Enum):
                           "V2013", None, 1, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "+BMonthEnd-1bd")
+    SGX_ID = futures_info("MSC Indonesia Index", AssetClass.EQUITY_FUT.value,
+                          "V2013", None, 5, "USD",
+                          [m.name for m in FutureContractMonth],
+                          None, "+BMonthEnd-1bd")
+    SGX_SG = futures_info("MSC Singapore Index", AssetClass.EQUITY_FUT.value,
+                          "V2013", None, 0.05, "USD",
+                          [m.name for m in FutureContractMonth],
+                          None, "+BMonthEnd-1bd")
+    SGX_TW = futures_info("MSC Taiwan Index", AssetClass.EQUITY_FUT.value,
+                          "V2013", None, 0.1, "USD",
+                          [m.name for m in FutureContractMonth],
+                          None, "+BMonthEnd-1bd")
+    EUREX_FMWO = futures_info("MSCI World Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMEU = futures_info("MSCI Europe Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.05, "EUR",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMMX = futures_info("MSCI Mexico Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMCN = futures_info("MSCI China Free Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMJP = futures_info("MSCI Japan Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMRS = futures_info("MSCI Russia Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMZA = futures_info("MSCI South Africa Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMTH = futures_info("MSCI Thailand Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.5, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMMY = futures_info("MSCI Malaysia Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMEA = futures_info("MSCI Emerging Markets Asia Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMEM = futures_info("MSCI Emerging Markets Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMEL = futures_info("MSCI Emerging Markets Latin America Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
+    EUREX_FMEE = futures_info("MSCI Emerging Markets EMEA Index", AssetClass.EQUITY_FUT.value,
+                             "U2013", None, 0.1, "USD",
+                              ["H", "M", "U", "Z"],
+                             None, "-1Fri+1Fri+2Fri")
     CBOE_VX = futures_info("VIX Futures", AssetClass.VOL_INDEX_FUT.value,
                            "K2004", None, 0.05, "USD",
                            [m.name for m in FutureContractMonth],
@@ -256,7 +320,7 @@ class FuturesInfo(Enum):
                           ["H", "M", "U", "Z"],
                           None, "+19d-1bd+1bd-5bd-5bd")
     # Money market futures
-    CME_ED = futures_info("Eurodollar Futures", AssetClass.MM_FUT.value,
+    CME_ED = futures_info("3-month Eurodollar Futures", AssetClass.MM_FUT.value,
                           "H1982", Denominator.MM_FUT.value, 0.0025, "USD",
                           ["H", "M", "U", "Z"],
                           None, "-1Wed+1Wed+2Wed-2bd")
@@ -340,6 +404,10 @@ class FuturesInfo(Enum):
     # CME - Commodity
     # Grains https://www.cmegroup.com/trading/agricultural/files/
     # AC-268_Grains_FC_FINAL_SR.pdf
+    CME_GI = futures_info("S&P GSCI", AssetClass.COMDTY_FUT.value,
+                         "Q1992", None, 0.05, "USD",
+                         [m.name for m in FutureContractMonth],
+                         None, "-MonthBegin+10bd")
     CME_C = futures_info("Chicago Corn", AssetClass.COMDTY_FUT.value,
                          "H1960", None, 0.25, "USD",
                          ["H", "K", "N", "U", "Z"],
@@ -356,6 +424,26 @@ class FuturesInfo(Enum):
                           "N1976", None, 0.25, "USD",
                           ["H", "K", "N", "U", "Z"],
                           None, "+14d-1bd")
+    ICE_RS = futures_info('Canola',
+                          AssetClass.COMDTY_FUT.value,
+                          'F1981', None, 0.1, 'USD',
+                          ['F', 'H', 'K', 'N', 'X'],
+                          None, '-MonthBegin+14d+1bd-1bd')
+    LIFFE_EBM = futures_info('Milling Wheat',
+                          AssetClass.COMDTY_FUT.value,
+                          'H2013', None, 0.01, 'EUR',
+                          ['F', 'H', 'K', 'U', 'X', 'Z'],
+                          None, '-MonthBegin+9d-1bd+1bd')
+    LIFFE_ECO = futures_info('Rapeseed',
+                          AssetClass.COMDTY_FUT.value,
+                          'X2013', None, 0.25, 'EUR',
+                          ['G', 'K', 'Q', 'X'],
+                          None, '-BMonthEnd')
+    MGEX_MW = futures_info('Hard Red Spring Wheat',
+                          AssetClass.COMDTY_FUT.value,
+                          'H1989', None, 0.25, 'USD',
+                          ['H', 'K', 'N', 'U', 'X'],
+                          None, '-MonthBegin+14d+1bd-1bd')
     # Gold https://www.cmegroup.com/trading/metals/files/
     # MT-055E_GoldFuturesOptions.pdf
     CME_GC = futures_info("COMEX Gold", AssetClass.COMDTY_FUT.value,
@@ -406,6 +494,36 @@ class FuturesInfo(Enum):
                           "M1990", None, 0.001, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "-3bd")
+    CME_N9 = futures_info('PJM Western Hub Real-Time Off-Peak',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.05, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-BMonthEnd')
+    CME_B6 = futures_info('PJM Northern Illinois Hub Real-Time Off-Peak',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.05, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-BMonthEnd')
+    CME_E4 = futures_info('PJM Western Hub Day-Ahead Off-Peak',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.05, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-BMonthEnd-1bd')
+    CME_D2 = futures_info('NYISO Zone G Day-Ahead Off-Peak',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.05, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-BMonthEnd-1bd')
+    CME_L3 = futures_info('PJM Northern Illinois Hub Day-Ahead Off-Peak',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.05, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-BMonthEnd-1bd')
+    CME_CU = futures_info('Chicago Ethanol',
+                          AssetClass.COMDTY_FUT.value,
+                          'G2014', None, 0.0001, 'USD',
+                          [m.name for m in FutureContractMonth],
+                          None, '-1bd')
     ICE_B = futures_info("Brent Crude Oil", AssetClass.COMDTY_FUT.value,
                          "F1993", None, 0.01, "USD",
                          [m.name for m in FutureContractMonth],
@@ -414,6 +532,17 @@ class FuturesInfo(Enum):
                          "F1990", None, 0.25, "USD",
                          [m.name for m in FutureContractMonth],
                          None, "+13d-2bd")
+    ICE_C = futures_info('EUA',
+                          AssetClass.COMDTY_FUT.value,
+                          'Z2005', None, 0.01, 'EUR',
+                          ['H', 'M', 'U', 'Z'],
+                          None, '-2Mon+1bd-1bd')  # for convenience
+    ICE_M = futures_info('UK Natural Gas',
+                          AssetClass.COMDTY_FUT.value,
+                          'H1997', None, 0.01, 'GBP',
+                         [m.name for m in FutureContractMonth],
+                          None, '-MonthBegin-2bd')
+    # Softs
     ICE_SB = futures_info("Sugar No. 11", AssetClass.COMDTY_FUT.value,
                           "H1964", None, 0.01, "USD",
                           ["H", "K", "N", "V"],
@@ -430,6 +559,16 @@ class FuturesInfo(Enum):
                           "H1970", None, 1, "USD",
                           ["H", "K", "N", "U", "Z"],
                           "-1bd+1bd-5bd", "+BMonthEnd-10bd-1bd")
+    ICE_OJ = futures_info('Orange Juice',
+                          AssetClass.COMDTY_FUT.value,
+                          'K1967', None, 0.05, 'USD',
+                          ['F', 'H', 'K', 'N', 'U', 'X'],
+                          None, '-14bd')
+    LIFFE_W = futures_info('White Sugar',
+                          AssetClass.COMDTY_FUT.value,
+                          'V1993', None, 0.1, 'USD',
+                          ['H', 'K', 'Q', 'V', 'Z'],
+                          None, '-2MonthEnd+15d+1bd-1bd')
     # https://www.cmegroup.com/trading/agricultural/files/
     # fact-card-cattle-futures-options.pdf
     CME_LC = futures_info("Live Cattle", AssetClass.COMDTY_FUT.value,
@@ -470,6 +609,7 @@ class PriceSkipDates(Enum):
     SGX_IN = ['2018-01-26']
     SGX_CN = ['2018-01-26']
     EUREX_FBTP = ['2009-09-01']
+    SGX_ID = ['2018-01-26']
 
 
 class ReturnSkipDates(Enum):
