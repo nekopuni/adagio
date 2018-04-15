@@ -25,6 +25,7 @@ price_source = 'price_source'
 # backtest price sources
 pcs_quandl_futures = 'pcs_quandl_futures'
 pcs_quandl_generic = 'pcs_quandl_generic'
+pcs_truefx = 'pcs_truefx'
 
 # layers params values
 equal_weight = 'equal_weight'

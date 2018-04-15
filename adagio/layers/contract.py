@@ -1,4 +1,3 @@
-from functools import partial
 from datetime import datetime
 
 import pandas as pd
@@ -27,6 +26,11 @@ class QuandlGeneric(BaseBacktestObject):
 class GenericInstrument(BaseBacktestObject):
     def __init__(self, **backtest_params):
         super(GenericInstrument, self).__init__(**backtest_params)
+
+
+class TrueFXInstrument(BaseBacktestObject):
+    def __init__(self, **backtest_params):
+        super(TrueFXInstrument, self).__init__(**backtest_params)
 
 
 class QuandlFutures(BaseBacktestObject):
