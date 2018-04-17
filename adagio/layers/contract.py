@@ -174,8 +174,17 @@ class QuandlFutures(BaseBacktestObject):
         library.write(self[keys.quandl_ticker], data)
 
     def load_data(self):
-        """ Load data either from Quandl directly or MongoDB stored locally """
+        """ Load data either from MongoDB stored locally """
 
+        library = get_library(keys.quandl_contract)
+        item = library.read(self[keys.quandl_ticker])
+        data = item.data
+        self.check_if_expired(data)
+        return data
+
+    def update_database(self):
+        """ Update local database by checking Quandl if they have the latest
+        data """
         library = get_library(keys.quandl_contract)
         try:
             item = library.read(self[keys.quandl_ticker])
@@ -193,8 +202,6 @@ class QuandlFutures(BaseBacktestObject):
             # if not found in MongoDB, then it tries to get data from Quandl
             data = self.load_from_quandl()
             self.to_mongo(library, data)
-
-        return data
 
     def get_date(self, shift_string):
         """ Shift date from the delivery month-begin """

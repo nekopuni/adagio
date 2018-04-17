@@ -153,6 +153,13 @@ class Engine(object):
                          others=[self.backtest_params[keys.backtest_ccy]])
             self.is_compiled = True
 
+    def update_database(self):
+        """ Update database used for LongOnly objects """
+        self.compile()
+        logger.info('Database update started')
+        self[0].run('update_database')
+        logger.info('Database update completed')
+
     def backtest(self):
         """ Run the layers by calling their functions in order """
 

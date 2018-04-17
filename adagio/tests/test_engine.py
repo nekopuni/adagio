@@ -2,6 +2,7 @@ import unittest
 
 import adagio
 from adagio import keys
+from adagio.layers.longonly import LongOnlyQuandlFutures
 
 
 class TestSingleEngine(unittest.TestCase):
@@ -67,6 +68,8 @@ class TestSingleEngine(unittest.TestCase):
         self.assertEqual(position.columns[3], 'portfolio')
         self.assertEqual(position.columns[4], 'portfolio_volatility_scaling')
 
+        self.assertEqual(self.engine.backtest_params[keys.backtest_ccy], 'USD')
+
     def test_longonly(self):
 
         longonly_params = {
@@ -77,21 +80,8 @@ class TestSingleEngine(unittest.TestCase):
         engine.add(adagio.LongOnly(**longonly_params))
         engine.backtest()
 
-        self.assertTrue(isinstance(self.engine[0][0], adagio.LongOnlyQuandlFutures))
-        self.assertTrue(isinstance(self.engine[0][1], adagio.LongOnlyQuandlFutures))
-
-    def test_longonly_quandlfutures(self):
-
-        longonly_params = {
-            keys.lo_ticker: ['SGX_NK', 'LIFFE_FTI']
-        }
-        # Simple Engine example
-        engine = adagio.Engine()
-        engine.add(adagio.LongOnlyQuandlFutures(**longonly_params))
-        engine.backtest()
-
-        self.assertTrue(isinstance(self.engine[0][0], adagio.LongOnlyQuandlFutures))
-        self.assertTrue(isinstance(self.engine[0][1], adagio.LongOnlyQuandlFutures))
+        self.assertTrue(isinstance(self.engine[0][0], LongOnlyQuandlFutures))
+        self.assertTrue(isinstance(self.engine[0][1], LongOnlyQuandlFutures))
 
 
 class TestMultipleEngine(unittest.TestCase):

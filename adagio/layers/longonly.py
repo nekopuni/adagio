@@ -12,12 +12,16 @@ from ..utils.const import FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth
 from ..utils.date import date_shift
 from ..utils.dict import merge_dicts
 from ..utils.logging import get_logger
-from ..utils.quandl import next_fut_ticker, futures_contract_month, year
+from ..utils.mongo import get_library
+from ..utils.quandl import (next_fut_ticker, futures_contract_month, year,
+                            to_yyyymm)
 
 logger = get_logger(name=__name__)
 
 
 class LongOnly(BaseBacktestObject):
+    _backtest_params = [keys.lo_ticker]
+
     def __init__(self, **backtest_params):
         backtest_params = self.init_params(**backtest_params)
         super(LongOnly, self).__init__(**backtest_params)
@@ -37,13 +41,11 @@ class LongOnly(BaseBacktestObject):
             keys.pcs_quandl_futures: LongOnlyQuandlFutures,
             keys.pcs_truefx: LongOnlyTrueFX,
         }
-        class_contractor = class_map[backtest_params[keys.price_source]]
+        class_constructor = class_map[backtest_params[keys.price_source]]
         for ticker in lo_ticker:
             params = copy(backtest_params)
             params[keys.lo_ticker] = ticker
-            futures_info = FuturesInfo[ticker].value
-            params = merge_dicts(params, futures_info._asdict())
-            objs.append(class_contractor(**params))
+            objs.append(class_constructor(**params))
         return objs
 
     @staticmethod
@@ -94,6 +96,10 @@ class LongOnly(BaseBacktestObject):
     def get_contracts(self):
         """ Collect contract information """
 
+    @abc.abstractmethod
+    def update_database(self):
+        """ Update database if necessary for underlying contract objects """
+
     def propagate_position(self, other):
         """ Propagate position to individual contract level """
         for contract in self.contracts:
@@ -121,6 +127,18 @@ class LongOnly(BaseBacktestObject):
 class LongOnlyQuandlFutures(LongOnly):
     def __init__(self, **backtest_params):
         super(LongOnlyQuandlFutures, self).__init__(**backtest_params)
+
+    def init_params(self, **backtest_params):
+        ticker = backtest_params[keys.lo_ticker]
+        # fixme lo_ticker must exist in FuturesInfo
+        futures_info = FuturesInfo[ticker].value
+        backtest_params = merge_dicts(backtest_params, futures_info._asdict())
+        backtest_params.setdefault(keys.backtest_ccy,
+                                   backtest_params[keys.contract_ccy])
+
+        # common params for LongOnly
+        backtest_params = super(LongOnlyQuandlFutures, self).init_params(**backtest_params)
+        return backtest_params
 
     @property
     def first_ticker(self):
@@ -160,22 +178,39 @@ class LongOnlyQuandlFutures(LongOnly):
         return self.get_all_prices(slice(date, date)).squeeze()
 
     def get_contracts(self):
-        """ Returns contract objects based on price source """
-        ticker = self.first_ticker
+        """ Return a list of available futures contract objects """
         contracts = []
         start_date = None
+
+        library = get_library(keys.quandl_contract)
+        symbol_regex = self[keys.lo_ticker].replace('_', '/')
+        all_tickers = library.list_symbols(regex=symbol_regex)
+        all_tickers.sort(key=to_yyyymm)
+
+        for ticker in all_tickers:
+            params = copy(self.backtest_params)
+            params[keys.quandl_ticker] = ticker  # individual
+            contract = QuandlFutures(**params)
+            end_date = contract.get_roll_date(DEFAULT_ROLL_RULE)
+
+            contract.backtest(start_date, end_date)
+            start_date = date_shift(end_date, '+1bd')
+            contracts.append(contract)
+
+        return contracts
+
+    def update_database(self):
+        """ Update database if necessary for underlying contract objects """
+        ticker = self.first_ticker
 
         while True:
             try:
                 params = copy(self.backtest_params)
                 params[keys.quandl_ticker] = ticker  # individual
+                logger.info('Checking if new data exists: {}'.format(ticker))
 
                 contract = QuandlFutures(**params)
-                end_date = contract.get_roll_date(DEFAULT_ROLL_RULE)
-
-                contract.backtest(start_date, end_date)
-                start_date = date_shift(end_date, '+1bd')
-                contracts.append(contract)
+                contract.update_database()
 
             except (quandl.NotFoundError, IndexError):
                 # if the requesting contract is far future
@@ -188,8 +223,6 @@ class LongOnlyQuandlFutures(LongOnly):
                     break
 
             ticker = next_fut_ticker(ticker, self[keys.roll_schedule])
-
-        return contracts
 
 
 class LongOnlyTrueFX(LongOnly):
