@@ -19,6 +19,7 @@ ANNUAL_FACTOR = 252.0
 RETURN_KEY_PRIORITY = ("Settle", "Settlement Price", "Last Traded",
                        "Last", "Close", "Previous Settlement")
 DEFAULT_ROLL_RULE = "-3bd"
+QUANDL_TICKER_FORMAT = '{}[FGHJKMNQUVXZ][0-9]+'
 
 futures_info = namedtuple("futures_info",
                           ["full_name", "asset_class", "start_from",
@@ -169,15 +170,15 @@ class FuturesInfo(Enum):
                           "V2013", None, 1, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "+BMonthEnd-1bd")
-    SGX_ID = futures_info("MSC Indonesia Index", AssetClass.EQUITY_FUT.value,
+    SGX_ID = futures_info("MSCI Indonesia Index", AssetClass.EQUITY_FUT.value,
                           "V2013", None, 5, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "+BMonthEnd-1bd")
-    SGX_SG = futures_info("MSC Singapore Index", AssetClass.EQUITY_FUT.value,
+    SGX_SG = futures_info("MSCI Singapore Index", AssetClass.EQUITY_FUT.value,
                           "V2013", None, 0.05, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "+BMonthEnd-1bd")
-    SGX_TW = futures_info("MSC Taiwan Index", AssetClass.EQUITY_FUT.value,
+    SGX_TW = futures_info("MSCI Taiwan Index", AssetClass.EQUITY_FUT.value,
                           "V2013", None, 0.1, "USD",
                           [m.name for m in FutureContractMonth],
                           None, "+BMonthEnd-1bd")
@@ -407,7 +408,7 @@ class FuturesInfo(Enum):
     CME_GI = futures_info("S&P GSCI", AssetClass.COMDTY_FUT.value,
                          "Q1992", None, 0.05, "USD",
                          [m.name for m in FutureContractMonth],
-                         None, "-MonthBegin+10bd")
+                         None, "+10bd")
     CME_C = futures_info("Chicago Corn", AssetClass.COMDTY_FUT.value,
                          "H1960", None, 0.25, "USD",
                          ["H", "K", "N", "U", "Z"],
@@ -428,12 +429,12 @@ class FuturesInfo(Enum):
                           AssetClass.COMDTY_FUT.value,
                           'F1981', None, 0.1, 'USD',
                           ['F', 'H', 'K', 'N', 'X'],
-                          None, '-MonthBegin+14d+1bd-1bd')
+                          None, '+14d+1bd-1bd')
     LIFFE_EBM = futures_info('Milling Wheat',
                           AssetClass.COMDTY_FUT.value,
                           'H2013', None, 0.01, 'EUR',
                           ['F', 'H', 'K', 'U', 'X', 'Z'],
-                          None, '-MonthBegin+9d-1bd+1bd')
+                          None, '+9d-1bd+1bd')
     LIFFE_ECO = futures_info('Rapeseed',
                           AssetClass.COMDTY_FUT.value,
                           'X2013', None, 0.25, 'EUR',
@@ -443,7 +444,7 @@ class FuturesInfo(Enum):
                           AssetClass.COMDTY_FUT.value,
                           'H1989', None, 0.25, 'USD',
                           ['H', 'K', 'N', 'U', 'X'],
-                          None, '-MonthBegin+14d+1bd-1bd')
+                          None, '+14d+1bd-1bd')
     # Gold https://www.cmegroup.com/trading/metals/files/
     # MT-055E_GoldFuturesOptions.pdf
     CME_GC = futures_info("COMEX Gold", AssetClass.COMDTY_FUT.value,
@@ -536,12 +537,12 @@ class FuturesInfo(Enum):
                           AssetClass.COMDTY_FUT.value,
                           'Z2005', None, 0.01, 'EUR',
                           ['H', 'M', 'U', 'Z'],
-                          None, '-2Mon+1bd-1bd')  # for convenience
+                          None, '+MonthEnd+Mon-2Mon+1bd-1bd')  # for convenience
     ICE_M = futures_info('UK Natural Gas',
                           AssetClass.COMDTY_FUT.value,
                           'H1997', None, 0.01, 'GBP',
                          [m.name for m in FutureContractMonth],
-                          None, '-MonthBegin-2bd')
+                          None, '-2bd')
     # Softs
     ICE_SB = futures_info("Sugar No. 11", AssetClass.COMDTY_FUT.value,
                           "H1964", None, 0.01, "USD",
@@ -563,12 +564,12 @@ class FuturesInfo(Enum):
                           AssetClass.COMDTY_FUT.value,
                           'K1967', None, 0.05, 'USD',
                           ['F', 'H', 'K', 'N', 'U', 'X'],
-                          None, '-14bd')
+                          None, '+BMonthEnd-14bd')
     LIFFE_W = futures_info('White Sugar',
                           AssetClass.COMDTY_FUT.value,
                           'V1993', None, 0.1, 'USD',
                           ['H', 'K', 'Q', 'V', 'Z'],
-                          None, '-2MonthEnd+15d+1bd-1bd')
+                          None, '-MonthEnd+15d+1bd-1bd')
     # https://www.cmegroup.com/trading/agricultural/files/
     # fact-card-cattle-futures-options.pdf
     CME_LC = futures_info("Live Cattle", AssetClass.COMDTY_FUT.value,
