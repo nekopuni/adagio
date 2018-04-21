@@ -179,6 +179,15 @@ class LongOnlyQuandlFutures(LongOnly):
         """
         return self.get_all_prices(slice(date, date)).squeeze()
 
+    def get_volume(self):
+        """ Return historical trading volume of contracts that are used for
+        long-only performance """
+        base_positions = pd.concat([i.position['base'].rename(i.name)
+                                    for i in self.contracts], axis=1)
+        volume = pd.concat([i.data['Volume'].rename(i.name)
+                            for i in self.contracts], axis=1)
+        return base_positions.mul(volume).sum(axis=1)
+
     def get_contracts(self):
         """ Return a list of available futures contract objects """
         contracts = []
