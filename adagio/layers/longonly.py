@@ -8,7 +8,8 @@ import quandl
 from .base import BaseBacktestObject
 from .contract import QuandlFutures
 from ..utils import keys
-from ..utils.const import FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth
+from ..utils.const import (FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth,
+                           QUANDL_TICKER_FORMAT)
 from ..utils.date import date_shift
 from ..utils.dict import merge_dicts
 from ..utils.logging import get_logger
@@ -135,6 +136,7 @@ class LongOnlyQuandlFutures(LongOnly):
         backtest_params = merge_dicts(backtest_params, futures_info._asdict())
         backtest_params.setdefault(keys.backtest_ccy,
                                    backtest_params[keys.contract_ccy])
+        backtest_params.setdefault(keys.nth_contract, 1)
 
         # common params for LongOnly
         backtest_params = super(LongOnlyQuandlFutures, self).init_params(**backtest_params)
@@ -183,21 +185,27 @@ class LongOnlyQuandlFutures(LongOnly):
         start_date = None
 
         library = get_library(keys.quandl_contract)
-        symbol_regex = self[keys.lo_ticker].replace('_', '/')
+        symbol_regex = (QUANDL_TICKER_FORMAT
+                        .format(self[keys.lo_ticker].replace('_', '/')))
         all_tickers = library.list_symbols(regex=symbol_regex)
         all_tickers.sort(key=to_yyyymm)
 
-        for ticker in all_tickers:
+        for idx, ticker in enumerate(all_tickers):
+            # all tickers are instantiated regardless of nth_contract as
+            # old contracts might be used to get roll dates.
             params = copy(self.backtest_params)
             params[keys.quandl_ticker] = ticker  # individual
             contract = QuandlFutures(**params)
-            end_date = contract.get_roll_date(DEFAULT_ROLL_RULE)
-
-            contract.backtest(start_date, end_date)
-            start_date = date_shift(end_date, '+1bd')
             contracts.append(contract)
 
-        return contracts
+            if idx >= self[keys.nth_contract] - 1:
+                contract_for_roll = contracts[idx - self[keys.nth_contract]
+                                              + 1]
+                end_date = contract_for_roll.get_roll_date(DEFAULT_ROLL_RULE)
+                contract.backtest(start_date, end_date)
+                start_date = date_shift(end_date, '+1bd')
+
+        return contracts[(self[keys.nth_contract] - 1):]
 
     def update_database(self):
         """ Update database if necessary for underlying contract objects """

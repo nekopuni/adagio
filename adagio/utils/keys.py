@@ -21,6 +21,7 @@ n_items = 'n_items'
 slippage = 'slippage'
 backtest_ccy = 'backtest_ccy'
 price_source = 'price_source'
+nth_contract = 'nth_contract'
 
 # backtest price sources
 pcs_quandl_futures = 'pcs_quandl_futures'

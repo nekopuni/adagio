@@ -215,6 +215,16 @@ class QuandlFutures(BaseBacktestObject):
             raise ValueError('{} not found.'.format(keys.first_notice_date))
         return self.get_date(self[keys.first_notice_date])
 
+    def get_roll_base_date(self):
+        """ Return roll base date from which the actual roll date is
+        calculated. This is either first notice date or last trade date. """
+        if self[keys.first_notice_date] is not None:
+            first_notice_date = self.first_notice_date()
+            last_trade_date = self.last_trade_date()
+            return min(first_notice_date, last_trade_date)
+        else:
+            return self.last_trade_date()
+
     def get_roll_date(self, roll_rule):
         """ Return roll date
          
@@ -223,18 +233,7 @@ class QuandlFutures(BaseBacktestObject):
         If the contract has a setting for first notice date, then the roll date
         is min(X-days before last trade date, X-days before first notice date)
         """
-        _roll_date = date_shift(self.last_trade_date(), roll_rule)
-        if self[keys.first_notice_date] is None:
-            return _roll_date
-        else:
-            _roll_date_notice = date_shift(self.first_notice_date(),
-                                           roll_rule)
-
-            if _roll_date_notice < _roll_date:
-                return _roll_date_notice
-            else:
-                raise ValueError("First notice should be earlier than "
-                                 "last trading day.")
+        return date_shift(self.get_roll_base_date(), roll_rule)
 
     def clean_data(self):
         """ Clean erroneous dates """

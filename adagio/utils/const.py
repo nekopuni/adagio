@@ -569,7 +569,7 @@ class FuturesInfo(Enum):
                           AssetClass.COMDTY_FUT.value,
                           'V1993', None, 0.1, 'USD',
                           ['H', 'K', 'Q', 'V', 'Z'],
-                          None, '-MonthEnd+15d+1bd-1bd')
+                          None, '-15d+1bd-1bd')
     # https://www.cmegroup.com/trading/agricultural/files/
     # fact-card-cattle-futures-options.pdf
     CME_LC = futures_info("Live Cattle", AssetClass.COMDTY_FUT.value,
