@@ -184,9 +184,15 @@ class LongOnlyQuandlFutures(LongOnly):
         long-only performance """
         base_positions = pd.concat([i.position['base'].rename(i.name)
                                     for i in self.contracts], axis=1)
-        volume = pd.concat([i.data['Volume'].rename(i.name)
-                            for i in self.contracts], axis=1)
-        return base_positions.mul(volume).sum(axis=1)
+
+        if self.contracts[0].has_volume:
+            key_name = self.contracts[0].get_volume_key()
+            volume = pd.concat([i.data[key_name].rename(i.name)
+                                for i in self.contracts], axis=1)
+            return base_positions.mul(volume).sum(axis=1).rename(key_name)
+        else:
+            # return NaN if volume doesn't exist
+            return pd.Series(index=base_positions.index)
 
     def get_contracts(self):
         """ Return a list of available futures contract objects """

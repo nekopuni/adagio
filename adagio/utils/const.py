@@ -18,6 +18,7 @@ ANNUAL_FACTOR = 252.0
 # ------------------------------------------------------------------------------
 RETURN_KEY_PRIORITY = ("Settle", "Settlement Price", "Last Traded",
                        "Last", "Close", "Previous Settlement")
+VOLUME_KEY_PRIORITY = ('Volume', 'Total Volume')
 DEFAULT_ROLL_RULE = "-3bd"
 QUANDL_TICKER_FORMAT = '{}[FGHJKMNQUVXZ][0-9]+'
 

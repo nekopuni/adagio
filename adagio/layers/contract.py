@@ -9,7 +9,8 @@ from .base import BaseBacktestObject
 from ..utils import keys
 from ..utils.config import AdagioConfig
 from ..utils.const import (FutureContractMonth, Denominator, PriceSkipDates,
-                           ReturnSkipDates, FuturesInfo, RETURN_KEY_PRIORITY)
+                           ReturnSkipDates, FuturesInfo, RETURN_KEY_PRIORITY,
+                           VOLUME_KEY_PRIORITY)
 from ..utils.date import date_shift
 from ..utils.logging import get_logger
 from ..utils.mongo import get_library
@@ -79,6 +80,15 @@ class QuandlFutures(BaseBacktestObject):
     def price_for_return(self):
         """ Return a series for returns """
         return self.data[self.get_return_key()]
+
+    @property
+    def has_volume(self):
+        """ Return if data contains volume information """
+        try:
+            _ = self.get_volume_key()
+            return True
+        except ValueError:
+            return False
 
     def get_final_positions(self):
         """ Return final position (adjusted by signals etc.) 
@@ -264,6 +274,14 @@ class QuandlFutures(BaseBacktestObject):
             if return_key in self.data.keys():
                 return return_key
         raise ValueError('No return key found. Data contains {}'
+                         .format(self.data.keys()))
+
+    def get_volume_key(self):
+        """ Return a column name used to be used for calculating returns """
+        for return_key in VOLUME_KEY_PRIORITY:
+            if return_key in self.data.keys():
+                return return_key
+        raise ValueError('No volume key found. Data contains {}'
                          .format(self.data.keys()))
 
     def calc_return(self):
