@@ -48,7 +48,8 @@ class VolatilityScaling(BaseScaling):
         """
         logger.info('Run layers: {}'.format(self))
         raw_returns = other.get_final_net_returns()
-        self.position = (volatility_scale(raw_returns, self.backtest_params)
+        vs_func = vs_method_map[self[keys.vs_method_params][keys.vs_method]]
+        self.position = (vs_func(raw_returns, self.backtest_params)
                          .rename(self.name))
 
 
@@ -74,19 +75,21 @@ class PortVolatilityScaling(BaseScaling):
         raw_returns = pd.concat([i.get_final_net_returns()
                                  for i in others], axis=1)
         raw_returns = raw_returns.sum(axis=1)
-        self.position = (volatility_scale(raw_returns, self.backtest_params)
+        vs_func = vs_method_map[self[keys.vs_method_params][keys.vs_method]]
+        self.position = (vs_func(raw_returns, self.backtest_params)
                          .rename(self.name))
 
 
-def volatility_scale(raw_returns, config):
+def volatility_scale_rolling(raw_returns, config):
     """ Calculate scaling factor to achieve target volatility
 
     :param raw_returns: dataframe containing return series
     :param config: dictionary with parameters for scaling
     :return: 
     """
+    vs_window = config[keys.vs_method_params][keys.vs_window]
     leverage = (raw_returns
-                .rolling(config[keys.vs_window])
+                .rolling(vs_window)
                 .std()
                 .mul(ANNUAL_FACTOR ** 0.5)
                 .pow(-1.0)
@@ -97,3 +100,36 @@ def volatility_scale(raw_returns, config):
                 .pipe(data_asfreq, config[keys.vs_chg_rule])
                 .fillna(method='backfill'))
     return leverage
+
+
+def volatility_scale_exponential(raw_returns, config):
+    """ Calculate scaling factor to achieve target volatility using
+    exponentially weighted rolling standard deviation.
+
+    :param raw_returns: dataframe containing return series
+    :param config: dictionary with parameters for scaling
+    :return:
+    """
+    vs_method_params = config[keys.vs_method_params]
+    com = vs_method_params.get(keys.vs_ewm_com, None)
+    span = vs_method_params.get(keys.vs_ewm_span, None)
+    halflife = vs_method_params.get(keys.vs_ewm_halflife, None)
+    alpha = vs_method_params.get(keys.vs_ewm_alpha, None)
+    leverage = (raw_returns
+                .ewm(com=com, span=span, halflife=halflife, alpha=alpha)
+                .std()
+                .mul(ANNUAL_FACTOR ** 0.5)
+                .pow(-1.0)
+                .mul(config[keys.vs_target_vol])
+                .clip(lower=config[keys.vs_floor],
+                      upper=config[keys.vs_cap])
+                .shift(2)  # trading lag
+                .pipe(data_asfreq, config[keys.vs_chg_rule])
+                .fillna(method='backfill'))
+    return leverage
+
+
+vs_method_map = {
+    keys.vs_rolling: volatility_scale_rolling,
+    keys.vs_ewm: volatility_scale_exponential,
+}

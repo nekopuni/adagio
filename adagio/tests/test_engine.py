@@ -11,9 +11,12 @@ class TestSingleEngine(unittest.TestCase):
             keys.lo_ticker: ['SGX_NK', 'LIFFE_FTI']
         }
         lo_vol_scale_params = {
-            keys.vs_window: 63,
             keys.vs_chg_rule: '+Wed-1bd+1bd',
             keys.vs_target_vol: 0.1,
+            keys.vs_method_params: {
+                keys.vs_method: keys.vs_rolling,
+                keys.vs_window: 63,
+            }
         }
         signal_params = {
             keys.signal_type: keys.momentum,
@@ -27,9 +30,12 @@ class TestSingleEngine(unittest.TestCase):
             keys.weighting: keys.equal_weight
         }
         portfolio_vol_scale_params = {
-            keys.vs_window: 63,
             keys.vs_chg_rule: '+Wed-1bd+1bd',
             keys.vs_target_vol: 0.1,
+            keys.vs_method_params: {
+                keys.vs_method: keys.vs_rolling,
+                keys.vs_window: 63,
+            }
         }
 
         # Simple Engine example
@@ -51,8 +57,8 @@ class TestSingleEngine(unittest.TestCase):
         self.assertEqual(len(self.engine[3]), 1)  # portfolio
         self.assertEqual(len(self.engine[4]), 1)  # portfolio vol scaling
 
-        self.assertTrue(isinstance(self.engine[0][0], adagio.LongOnly))
-        self.assertTrue(isinstance(self.engine[0][1], adagio.LongOnly))
+        self.assertTrue(isinstance(self.engine[0][0], LongOnlyQuandlFutures))
+        self.assertTrue(isinstance(self.engine[0][1], LongOnlyQuandlFutures))
         self.assertTrue(isinstance(self.engine[1][0], adagio.VolatilityScaling))
         self.assertTrue(isinstance(self.engine[1][1], adagio.VolatilityScaling))
         self.assertTrue(isinstance(self.engine[2][0], adagio.Signal))
@@ -70,19 +76,6 @@ class TestSingleEngine(unittest.TestCase):
 
         self.assertEqual(self.engine.backtest_params[keys.backtest_ccy], 'USD')
 
-    def test_longonly(self):
-
-        longonly_params = {
-            keys.lo_ticker: ['SGX_NK', 'LIFFE_FTI']
-        }
-        # Simple Engine example
-        engine = adagio.Engine()
-        engine.add(adagio.LongOnly(**longonly_params))
-        engine.backtest()
-
-        self.assertTrue(isinstance(self.engine[0][0], LongOnlyQuandlFutures))
-        self.assertTrue(isinstance(self.engine[0][1], LongOnlyQuandlFutures))
-
 
 class TestMultipleEngine(unittest.TestCase):
     def setUp(self):
@@ -90,9 +83,12 @@ class TestMultipleEngine(unittest.TestCase):
             keys.lo_ticker: ['SGX_NK', 'LIFFE_FTI'],
         }
         lo_vol_scale_params = {
-            keys.vs_window: 63,
             keys.vs_chg_rule: '+Wed-1bd+1bd',
             keys.vs_target_vol: 0.1,
+            keys.vs_method_params: {
+                keys.vs_method: keys.vs_rolling,
+                keys.vs_window: 63,
+            }
         }
         signal_params = {
             keys.signal_type: keys.momentum,
@@ -106,9 +102,12 @@ class TestMultipleEngine(unittest.TestCase):
             keys.weighting: keys.equal_weight
         }
         portfolio_vol_scale_params = {
-            keys.vs_window: 63,
             keys.vs_chg_rule: '+Wed-1bd+1bd',
             keys.vs_target_vol: 0.1,
+            keys.vs_method_params: {
+                keys.vs_method: keys.vs_rolling,
+                keys.vs_window: 63,
+            }
         }
 
         # Nested Engine example
@@ -151,8 +150,8 @@ class TestMultipleEngine(unittest.TestCase):
         self.assertTrue(isinstance(self.engine[2][0],
                                    adagio.PortVolatilityScaling))
 
-        self.assertTrue(isinstance(self.engine[0][0][0][0], adagio.LongOnly))
-        self.assertTrue(isinstance(self.engine[0][0][0][1], adagio.LongOnly))
+        self.assertTrue(isinstance(self.engine[0][0][0][0], LongOnlyQuandlFutures))
+        self.assertTrue(isinstance(self.engine[0][0][0][1], LongOnlyQuandlFutures))
         self.assertTrue(isinstance(self.engine[0][0][1][0],
                                    adagio.VolatilityScaling))
         self.assertTrue(isinstance(self.engine[0][0][1][1],
@@ -160,8 +159,8 @@ class TestMultipleEngine(unittest.TestCase):
         self.assertTrue(isinstance(self.engine[0][0][2][0], adagio.Signal))
         self.assertTrue(isinstance(self.engine[0][0][2][1], adagio.Signal))
 
-        self.assertTrue(isinstance(self.engine[0][1][0][0], adagio.LongOnly))
-        self.assertTrue(isinstance(self.engine[0][1][0][1], adagio.LongOnly))
+        self.assertTrue(isinstance(self.engine[0][1][0][0], LongOnlyQuandlFutures))
+        self.assertTrue(isinstance(self.engine[0][1][0][1], LongOnlyQuandlFutures))
         self.assertTrue(isinstance(self.engine[0][1][1][0],
                                    adagio.VolatilityScaling))
         self.assertTrue(isinstance(self.engine[0][1][1][1],
