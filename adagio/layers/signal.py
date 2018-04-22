@@ -26,7 +26,8 @@ class Signal(BaseBacktestObject):
         backtest_params.setdefault(keys.position_floor, None)
         backtest_params.setdefault(keys.position_cap, None)
 
-        signal_windows = backtest_params[keys.signal_windows]
+        signal_method_params = backtest_params[keys.signal_method_params]
+        signal_windows = signal_method_params[keys.signal_windows]
         if isinstance(signal_windows, (int, float)):
             backtest_params[keys.signal_windows] = [signal_windows]
         return backtest_params
@@ -36,20 +37,7 @@ class Signal(BaseBacktestObject):
         if keys.name in self.backtest_params:
             return self[keys.name]
         else:
-            return self[keys.signal_type]
-
-    def get_signal_func(self):
-        if self[keys.signal_type] == keys.momentum:
-            return self.momentum
-        else:
-            raise NotImplementedError()
-
-    def momentum(self, other):
-        raw_returns = other.get_final_net_returns()
-        signal = (momentum(raw_returns, self.backtest_params)
-                  .rename(self.name))
-
-        return signal
+            return self[keys.signal_method_params][keys.signal_method]
 
     def signal_to_position(self, signal):
         """ Convert signal to position """
@@ -63,23 +51,28 @@ class Signal(BaseBacktestObject):
         logger.info('Run layers: {}'.format(self))
 
         # signal calculation
-        signal_func = self.get_signal_func()
-        signal = signal_func(other)
+        signal_method = self[keys.signal_method_params][keys.signal_method]
+        signal_func = signal_method_map[signal_method]
+        signal = (signal_func(other, self.backtest_params)
+                  .rename(self.name))
 
         # convert signal to position
         self.position = self.signal_to_position(signal)
 
 
-def momentum(raw_returns, config):
-    """ Compute time-series momentum signal. Multiple lookback windows can be
-    applied to the signal calculation.
+def signal_trend_ma_xover(other, config):
+    """ Compute trend following signal using moving average cross-over.
+    Multiple lookback windows can be applied to the signal calculation.
 
     :param raw_returns: dataframe containing return series
     :param config: dictionary with parameters for signals
     :return: 
     """
-    signal = pd.concat([momentum_single(raw_returns, *w)
-                        for w in config[keys.signal_windows]], axis=1)
+    raw_returns = other.get_final_net_returns()
+    signal_method_params = config[keys.signal_method_params]
+    signal = pd.concat([signal_trend_ma_xover_single(raw_returns, *w)
+                        for w in signal_method_params[keys.signal_windows]],
+                       axis=1)
 
     signal = (signal
               .mean(axis=1)
@@ -89,8 +82,8 @@ def momentum(raw_returns, config):
     return signal
 
 
-def momentum_single(lo_return, st_window, lt_window):
-    """ Compute time-series momentum signal
+def signal_trend_ma_xover_single(lo_return, st_window, lt_window):
+    """ Compute trend following signal using moving average cross-over.
     
     :param lo_return: original return series
     :param st_window: integer for short-term window
@@ -112,3 +105,8 @@ def momentum_single(lo_return, st_window, lt_window):
         signal=lambda df: (df['raw_signal']
                            .div(df['raw_signal'].ewm(halflife=252).std()))
     )[['signal']]
+
+
+signal_method_map = {
+    keys.signal_trend_ma_xover: signal_trend_ma_xover,
+}

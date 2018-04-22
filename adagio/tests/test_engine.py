@@ -19,8 +19,10 @@ class TestSingleEngine(unittest.TestCase):
             }
         }
         signal_params = {
-            keys.signal_type: keys.momentum,
-            keys.signal_windows: [[8, 24], [16, 48], [32, 96]],
+            keys.signal_method_params: {
+                keys.signal_method: keys.signal_trend_ma_xover,
+                keys.signal_windows: [[8, 24], [16, 48], [32, 96]],
+            },
             keys.signal_chg_rule: '+Wed-1bd+1bd',
             keys.signal_to_position: keys.linear,
             keys.position_cap: 1.0,
@@ -70,7 +72,7 @@ class TestSingleEngine(unittest.TestCase):
         position = self.engine[0][0].contracts[0].position
         self.assertEqual(position.columns[0], 'base')
         self.assertEqual(position.columns[1], 'volatility_scaling')
-        self.assertEqual(position.columns[2], 'momentum')
+        self.assertEqual(position.columns[2], 'signal_trend_ma_xover')
         self.assertEqual(position.columns[3], 'portfolio')
         self.assertEqual(position.columns[4], 'portfolio_volatility_scaling')
 
@@ -91,8 +93,10 @@ class TestMultipleEngine(unittest.TestCase):
             }
         }
         signal_params = {
-            keys.signal_type: keys.momentum,
-            keys.signal_windows: [[8, 24], [16, 48], [32, 96]],
+            keys.signal_method_params: {
+                keys.signal_method: keys.signal_trend_ma_xover,
+                keys.signal_windows: [[8, 24], [16, 48], [32, 96]],
+            },
             keys.signal_chg_rule: '+Wed-1bd+1bd',
             keys.signal_to_position: keys.linear,
             keys.position_cap: 1.0,
@@ -171,7 +175,7 @@ class TestMultipleEngine(unittest.TestCase):
         position = self.engine[0][0][0][0].contracts[0].position
         self.assertEqual(position.columns[0], 'base')
         self.assertEqual(position.columns[1], 'volatility_scaling')
-        self.assertEqual(position.columns[2], 'momentum')
+        self.assertEqual(position.columns[2], 'signal_trend_ma_xover')
         self.assertEqual(position.columns[3], 'portfolio')
         self.assertEqual(position.columns[4], 'portfolio_volatility_scaling')
 
