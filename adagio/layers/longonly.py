@@ -143,9 +143,7 @@ class LongOnlyQuandlFutures(LongOnly):
         backtest_params.setdefault(keys.backtest_ccy,
                                    backtest_params[keys.contract_ccy])
         backtest_params.setdefault(keys.nth_contract, 1)
-        backtest_params.setdefault(keys.splice_func, None)
-        if backtest_params[keys.splice_func]:
-            backtest_params[keys.is_spliced] = True
+        backtest_params[keys.is_spliced] = ticker in _splice_func_map
 
         # common params for LongOnly
         backtest_params = super(LongOnlyQuandlFutures, self).init_params(**backtest_params)
@@ -207,11 +205,11 @@ class LongOnlyQuandlFutures(LongOnly):
         """ Return a list of available futures contract objects """
         contracts = []
         start_date = None
-        if self[keys.splice_func] is None:
+        if self[keys.is_spliced]:
+            all_tickers = _splice_func_map[self[keys.lo_ticker]]()
+        else:
             all_tickers = get_tickers_from_db(self[keys.lo_ticker]
                                               .replace('_', '/'))
-        else:
-            all_tickers = _splice_func_map[self[keys.splice_func]]()
 
         for idx, ticker in enumerate(all_tickers):
             # all tickers are instantiated regardless of nth_contract as
@@ -299,7 +297,7 @@ def splice_ym_and_dj():
 
 
 _splice_func_map = {
-    keys.splice_es_and_sp: splice_es_and_sp,
-    keys.splice_nq_and_nd: splice_nq_and_nd,
-    keys.splice_ym_and_dj: splice_ym_and_dj,
+    FuturesInfo.CME_ES._name_: splice_es_and_sp,
+    FuturesInfo.CME_NQ._name_: splice_nq_and_nd,
+    FuturesInfo.CME_YM._name_: splice_ym_and_dj,
 }
