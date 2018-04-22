@@ -1,6 +1,9 @@
 import re
 from .decorators import check_quandl_ticker
-from .const import FutureContractMonth
+from .const import (FutureContractMonth, QUANDL_FULL_TICKER_MATCH,
+                    QUANDL_GENERIC_TICKER_MATCH, QUANDL_TICKER_FORMAT)
+from .mongo import get_library
+from . import keys
 
 
 @check_quandl_ticker
@@ -57,7 +60,35 @@ def next_fut_ticker(ticker, roll_schedule):
 
 @check_quandl_ticker
 def to_yyyymm(ticket):
+    """ Convert a full Quandl ticker to yyyymm (delivery month).
+    e.g., CME/ESH2000 -> 200003 """
     contract_year = year(ticket)
     contract_month = futures_contract_month(ticket)
     contract_month = str(FutureContractMonth[contract_month].value).zfill(2)
     return int('{}{}'.format(contract_year, contract_month))
+
+
+def is_generic_futures_ticker(generic_ticker):
+    """ Check if the given ticker is generic """
+    if not bool(re.match(QUANDL_FULL_TICKER_MATCH, generic_ticker)):
+        if bool(re.match(QUANDL_GENERIC_TICKER_MATCH, generic_ticker)):
+            return True
+    else:
+        return False
+
+
+def get_tickers_from_db(generic_ticker):
+    """ Return a sorted list of individual tickers for the given generic
+
+    :param generic_ticker: generic ticker such as CME/ES
+    :return:
+    """
+    if not is_generic_futures_ticker(generic_ticker):
+        raise ValueError('{} is not a generic Quandl ticker'
+                         .format(generic_ticker))
+
+    library = get_library(keys.quandl_contract)
+    symbol_regex = QUANDL_TICKER_FORMAT.format(generic_ticker)
+    all_tickers = library.list_symbols(regex=symbol_regex)
+    all_tickers.sort(key=to_yyyymm)
+    return all_tickers

@@ -22,6 +22,11 @@ slippage = 'slippage'
 backtest_ccy = 'backtest_ccy'
 price_source = 'price_source'
 nth_contract = 'nth_contract'
+is_spliced = 'is_spliced'
+splice_func = 'splice_func'
+splice_es_and_sp = 'splice_es_and_sp'
+splice_nq_and_nd = 'splice_nq_and_nd'
+splice_ym_and_dj = 'splice_ym_and_dj'
 
 # backtest price sources
 pcs_quandl_futures = 'pcs_quandl_futures'

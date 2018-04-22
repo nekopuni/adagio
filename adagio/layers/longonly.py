@@ -8,14 +8,12 @@ import quandl
 from .base import BaseBacktestObject
 from .contract import QuandlFutures
 from ..utils import keys
-from ..utils.const import (FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth,
-                           QUANDL_TICKER_FORMAT)
+from ..utils.const import FuturesInfo, DEFAULT_ROLL_RULE, FutureContractMonth
 from ..utils.date import date_shift
 from ..utils.dict import merge_dicts
 from ..utils.logging import get_logger
-from ..utils.mongo import get_library
 from ..utils.quandl import (next_fut_ticker, futures_contract_month, year,
-                            to_yyyymm)
+                            get_tickers_from_db, to_yyyymm)
 
 logger = get_logger(name=__name__)
 
@@ -73,10 +71,18 @@ class LongOnly(BaseBacktestObject):
 
     def get_final_positions(self):
         """ Return aggregated positions for long-only returns """
-        return (pd.concat([c.get_final_positions()
-                           for c in self.contracts], axis=1)
+        return (self.get_individual_positions()
                 .sum(axis=1)
                 .rename('final_positions ({})'.format(self.name)))
+
+    def get_individual_positions(self, date_range=None):
+        """ Return individual positions for each underlying contracts """
+        positions = (pd.concat([c.get_final_positions().rename(c.name)
+                                for c in self.contracts], axis=1))
+        if date_range is not None:
+            positions = positions.loc[date_range, :]
+
+        return positions.dropna(how='all', axis=1)
 
     def aggregate_contract_returns(self, is_gross):
         """ Sum up returns for each contract
@@ -137,6 +143,9 @@ class LongOnlyQuandlFutures(LongOnly):
         backtest_params.setdefault(keys.backtest_ccy,
                                    backtest_params[keys.contract_ccy])
         backtest_params.setdefault(keys.nth_contract, 1)
+        backtest_params.setdefault(keys.splice_func, None)
+        if backtest_params[keys.splice_func]:
+            backtest_params[keys.is_spliced] = True
 
         # common params for LongOnly
         backtest_params = super(LongOnlyQuandlFutures, self).init_params(**backtest_params)
@@ -151,7 +160,7 @@ class LongOnlyQuandlFutures(LongOnly):
         logger.info('Run layers: {}'.format(self))
         self.contracts = self.get_contracts()
 
-    def get_all_prices(self, date_range=None, keys=None):
+    def get_individual_prices(self, date_range=None, keys=None):
         """ Return concatenated price data from all contracts
 
         :param keys: list of key names. If None price data to compute returns
@@ -177,9 +186,9 @@ class LongOnlyQuandlFutures(LongOnly):
         :param date: date on which the futures curve is observed
         :return:
         """
-        return self.get_all_prices(slice(date, date)).squeeze()
+        return self.get_individual_prices(slice(date, date)).squeeze()
 
-    def get_volume(self):
+    def get_generic_volume(self):
         """ Return historical trading volume of contracts that are used for
         long-only performance """
         base_positions = pd.concat([i.position['base'].rename(i.name)
@@ -198,12 +207,11 @@ class LongOnlyQuandlFutures(LongOnly):
         """ Return a list of available futures contract objects """
         contracts = []
         start_date = None
-
-        library = get_library(keys.quandl_contract)
-        symbol_regex = (QUANDL_TICKER_FORMAT
-                        .format(self[keys.lo_ticker].replace('_', '/')))
-        all_tickers = library.list_symbols(regex=symbol_regex)
-        all_tickers.sort(key=to_yyyymm)
+        if self[keys.splice_func] is None:
+            all_tickers = get_tickers_from_db(self[keys.lo_ticker]
+                                              .replace('_', '/'))
+        else:
+            all_tickers = _splice_func_map[self[keys.splice_func]]()
 
         for idx, ticker in enumerate(all_tickers):
             # all tickers are instantiated regardless of nth_contract as
@@ -251,3 +259,47 @@ class LongOnlyQuandlFutures(LongOnly):
 class LongOnlyTrueFX(LongOnly):
     def __init__(self, **backtest_params):
         super(LongOnlyTrueFX, self).__init__(**backtest_params)
+
+
+def _get_spliced_symbols(lo_tickers, ranges):
+    """ Return a list of spliced tickers
+
+    :param lo_tickers: list of lo_ticker
+    :param ranges: list of list containing two yyyymm (both side including)
+    :return:
+    """
+    if len(lo_tickers) != len(ranges):
+        raise ValueError('Length mismatch. lo_tickers={}, ranges={}'
+                         .format(lo_tickers, ranges))
+    all_symbols = [get_tickers_from_db(i) for i in lo_tickers]
+    result = []
+    for symbols, range in zip(all_symbols, ranges):
+        result += [s for s in symbols if range[0] <= to_yyyymm(s) <= range[1]]
+    return result
+
+
+# wait for 1 year after the introduction of the new ticker before switching
+# to allow it to have enough data.
+def splice_es_and_sp():
+    lo_tickers = ['CME/SP', 'CME/ES']
+    ranges = [[0, 199811], [199812, 999912]]
+    return _get_spliced_symbols(lo_tickers, ranges)
+
+
+def splice_nq_and_nd():
+    lo_tickers = ['CME/ND', 'CME/NQ']
+    ranges = [[0, 200008], [200009, 999912]]
+    return _get_spliced_symbols(lo_tickers, ranges)
+
+
+def splice_ym_and_dj():
+    lo_tickers = ['CME/DJ', 'CME/YM']
+    ranges = [[0, 201302], [201303, 999912]]
+    return _get_spliced_symbols(lo_tickers, ranges)
+
+
+_splice_func_map = {
+    keys.splice_es_and_sp: splice_es_and_sp,
+    keys.splice_nq_and_nd: splice_nq_and_nd,
+    keys.splice_ym_and_dj: splice_ym_and_dj,
+}

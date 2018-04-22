@@ -20,7 +20,9 @@ RETURN_KEY_PRIORITY = ("Settle", "Settlement Price", "Last Traded",
                        "Last", "Close", "Previous Settlement")
 VOLUME_KEY_PRIORITY = ('Volume', 'Total Volume')
 DEFAULT_ROLL_RULE = "-3bd"
-QUANDL_TICKER_FORMAT = '{}[FGHJKMNQUVXZ][0-9]+'
+QUANDL_GENERIC_TICKER_MATCH = '^\w+/\w+$'
+QUANDL_FULL_TICKER_MATCH = '^\w+/\w+[FGHJKMNQUVXZ][0-9]+$'
+QUANDL_TICKER_FORMAT = '^{}[FGHJKMNQUVXZ][0-9]+$'
 
 futures_info = namedtuple("futures_info",
                           ["full_name", "asset_class", "start_from",
@@ -80,6 +82,10 @@ class FuturesInfo(Enum):
                           None, "-1Fri+1Fri+2Fri")
     CME_DJ = futures_info("Full-size Dow Jones", AssetClass.EQUITY_FUT.value,
                           "H1998", None, 1, "USD",
+                          ["H", "M", "U", "Z"],
+                          None, "-1Fri+1Fri+2Fri")
+    CME_YM = futures_info("E-mini Dow Jones Futures", AssetClass.EQUITY_FUT.value,
+                          "H2012", None, 1, "USD",
                           ["H", "M", "U", "Z"],
                           None, "-1Fri+1Fri+2Fri")
     CME_MD = futures_info("S&P 400 MidCap Index", AssetClass.EQUITY_FUT.value,
