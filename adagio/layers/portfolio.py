@@ -1,6 +1,9 @@
+import pandas as pd
+
 from .base import BaseBacktestObject
 from .engine import Engine
 from .longonly import LongOnly
+from ..utils.date import data_asfreq
 from ..utils.logging import get_logger
 from ..utils import keys
 
@@ -33,7 +36,12 @@ class Portfolio(BaseBacktestObject):
             if isinstance(other, LongOnly):
                 # portfolio only contains one LongOnly object
                 other = [other]
-            self.position = 1.0 / len(other)
+            # equally allocate across available instruments at that time
+            ret = pd.concat([i.get_final_gross_returns() for i in other],
+                            axis=1).fillna(method='pad')
+            self.position = (ret.count(axis=1).pow(-1.0)
+                             .pipe(data_asfreq, self[keys.port_weight_chg_rule])
+                             .rename(self.name))
 
         elif isinstance(self[keys.weighting], list):
             self.position = dict()

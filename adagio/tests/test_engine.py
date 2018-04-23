@@ -29,7 +29,8 @@ class TestSingleEngine(unittest.TestCase):
             keys.position_floor: -1.0
         }
         portfolio_params = {
-            keys.weighting: keys.equal_weight
+            keys.weighting: keys.equal_weight,
+            keys.port_weight_chg_rule: '+Wed-1bd+1bd',
         }
         portfolio_vol_scale_params = {
             keys.vs_chg_rule: '+Wed-1bd+1bd',
@@ -103,7 +104,8 @@ class TestMultipleEngine(unittest.TestCase):
             keys.position_floor: -1.0
         }
         portfolio_params = {
-            keys.weighting: keys.equal_weight
+            keys.weighting: keys.equal_weight,
+            keys.port_weight_chg_rule: '+Wed-1bd+1bd',
         }
         portfolio_vol_scale_params = {
             keys.vs_chg_rule: '+Wed-1bd+1bd',
