@@ -560,7 +560,7 @@ class FuturesInfo(Enum):
                           ["H", "K", "N", "U", "Z"],
                           None, "+BMonthEnd-8bd")
     ICE_CT = futures_info("Cotton", AssetClass.COMDTY_FUT.value,
-                          "H1972", None, 0.01, "USD",
+                          "K1972", None, 0.01, "USD",
                           ["H", "K", "N", "V", "Z"],
                           "-1bd+1bd-5bd", "+BMonthEnd-16bd")
     ICE_CC = futures_info("Cocoa", AssetClass.COMDTY_FUT.value,
