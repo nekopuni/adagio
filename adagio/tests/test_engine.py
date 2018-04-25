@@ -1,3 +1,4 @@
+from datetime import datetime
 import unittest
 
 import adagio
@@ -78,6 +79,162 @@ class TestSingleEngine(unittest.TestCase):
         self.assertEqual(position.columns[4], 'portfolio_volatility_scaling')
 
         self.assertEqual(self.engine.backtest_params[keys.backtest_ccy], 'USD')
+
+
+class TestBacktestPreiod(unittest.TestCase):
+    def test_start_end_date(self):
+        engine = adagio.Engine()
+        self.assertTrue(engine.backtest_params[keys.backtest_start_date] is None)
+        self.assertTrue(engine.backtest_params[keys.backtest_end_date] is None)
+
+        longonly_params = {
+            keys.lo_ticker: ['SGX_NK', 'LIFFE_FTI']
+        }
+        engine = adagio.Engine(backtest_start_date='2018-01-31',
+                               backtest_end_date='2018-03-30')
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+        self.assertEqual(engine.backtest_params[keys.backtest_start_date],
+                         datetime(2018, 1, 31))
+        self.assertEqual(engine.backtest_params[keys.backtest_end_date],
+                         datetime(2018, 3, 30))
+
+        lo = engine[0]
+        self.assertEqual(lo[0].backtest_params[keys.backtest_start_date],
+                         datetime(2018, 1, 31))
+        self.assertEqual(lo[0].backtest_params[keys.backtest_end_date],
+                         datetime(2018, 3, 30))
+        self.assertEqual(lo[1].backtest_params[keys.backtest_start_date],
+                         datetime(2018, 1, 31))
+        self.assertEqual(lo[1].backtest_params[keys.backtest_end_date],
+                         datetime(2018, 3, 30))
+
+        c00 = lo[0].contracts[0]  # SGX/NKH2018
+        self.assertEqual(c00[keys.start_date], None)
+        self.assertEqual(c00[keys.end_date], datetime(2018, 3, 1))
+        self.assertEqual(c00[keys.backtest_start_date], datetime(2018, 1, 31))
+        self.assertEqual(c00[keys.backtest_end_date], datetime(2018, 3, 30))
+
+    def test_spliced(self):
+        engine_params = {
+            keys.backtest_start_date: '1996-01-2',
+            keys.backtest_end_date: '2000-12-29',
+        }
+
+        longonly_params = {
+            keys.lo_ticker: 'CME_ES',
+        }
+
+        engine = adagio.Engine(**engine_params)
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+
+        contracts = engine[0][0].contracts
+        final_position = engine.get_final_positions()
+        net_return = engine.get_final_net_returns()
+        self.assertEqual(final_position.index[0],
+                         datetime(1996, 1, 2))
+        self.assertEqual(net_return.index[0],
+                         datetime(1996, 1, 2))
+
+        self.assertEqual(final_position.index[-1],
+                         datetime(2000, 12, 29))
+        self.assertEqual(net_return.index[-1],
+                         datetime(2000, 12, 29))
+        self.assertEqual(contracts[0].name, 'CME/SPH1996')
+        self.assertEqual(contracts[-1].name, 'CME/ESH2001')
+
+    def test_1st_futures(self):
+        engine_params = {
+            keys.backtest_start_date: '2017-01-03',
+            keys.backtest_end_date: '2017-12-29',
+        }
+
+        longonly_params = {
+            keys.lo_ticker: 'ICE_RF',
+        }
+
+        engine = adagio.Engine(**engine_params)
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+
+        contracts = engine[0][0].contracts
+        final_position = engine.get_final_positions()
+        net_return = engine.get_final_net_returns()
+        self.assertEqual(final_position.index[0],
+                         datetime(2017, 1, 3))
+        self.assertEqual(net_return.index[0],
+                         datetime(2017, 1, 3))
+
+        self.assertEqual(final_position.index[-1],
+                         datetime(2017, 12, 29))
+        self.assertEqual(net_return.index[-1],
+                         datetime(2017, 12, 29))
+        self.assertEqual(contracts[0].name, 'ICE/RFH2017')
+        self.assertEqual(contracts[-1].name, 'ICE/RFH2018')
+
+    def test_2nd_futures(self):
+        engine_params = {
+            keys.backtest_start_date: '2017-01-03',
+            keys.backtest_end_date: '2017-12-29',
+        }
+
+        longonly_params = {
+            keys.lo_ticker: 'ICE_RF',
+            keys.nth_contract: 2,
+        }
+
+        engine = adagio.Engine(**engine_params)
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+
+        contracts = engine[0][0].contracts
+        final_position = engine.get_final_positions()
+        net_return = engine.get_final_net_returns()
+        self.assertEqual(final_position.index[0],
+                         datetime(2017, 1, 3))
+        self.assertEqual(net_return.index[0],
+                         datetime(2017, 1, 3))
+
+        self.assertEqual(final_position.index[-1],
+                         datetime(2017, 12, 29))
+        self.assertEqual(net_return.index[-1],
+                         datetime(2017, 12, 29))
+        self.assertEqual(contracts[0].name, 'ICE/RFM2017')
+        self.assertEqual(contracts[-1].name, 'ICE/RFM2018')
+
+    def test_symbol(self):
+        engine_params = {
+            keys.backtest_start_date: '2017-01-03',
+            keys.backtest_end_date: '2017-12-29',
+        }
+
+        longonly_params = {
+            keys.lo_ticker: 'ICE_RF',
+            keys.nth_contract: 2,
+        }
+
+        engine = adagio.Engine(**engine_params)
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+        symbol1 = engine.symbol
+
+        engine_params = {
+            keys.backtest_start_date: '2016-01-03',
+            keys.backtest_end_date: '2017-12-29',
+        }
+
+        longonly_params = {
+            keys.lo_ticker: 'ICE_RF',
+            keys.nth_contract: 2,
+        }
+
+        engine = adagio.Engine(**engine_params)
+        engine.add(adagio.LongOnly(**longonly_params))
+        engine.backtest()
+        symbol2 = engine.symbol
+
+        self.assertEqual(symbol1, symbol2)
 
 
 class TestMultipleEngine(unittest.TestCase):

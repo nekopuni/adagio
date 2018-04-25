@@ -1,3 +1,4 @@
+from copy import copy
 from functools import reduce
 
 import pandas as pd
@@ -38,6 +39,16 @@ class Engine(object):
         """ Initialise parameters """
         backtest_params.setdefault(keys.name, 'engine')
         backtest_params.setdefault(keys.backtest_ccy, 'USD')
+
+        start_date = backtest_params.get(keys.backtest_start_date, None)
+        end_date = backtest_params.get(keys.backtest_end_date, None)
+        if start_date is not None:
+            start_date = pd.to_datetime(start_date)
+        if end_date is not None:
+            end_date = pd.to_datetime(end_date)
+        backtest_params[keys.backtest_start_date] = start_date
+        backtest_params[keys.backtest_end_date] = end_date
+
         return backtest_params
 
     @property
@@ -47,7 +58,10 @@ class Engine(object):
     @property
     def symbol(self):
         """ Symbol used for MongoDB """
-        return to_hash(self.all_params)
+        params_for_symbol = copy(self.all_params)
+        del params_for_symbol[keys.backtest_start_date]
+        del params_for_symbol[keys.backtest_end_date]
+        return to_hash(params_for_symbol)
 
     @property
     def all_params(self):
@@ -151,6 +165,10 @@ class Engine(object):
 
             self.cascade('set_return_currency',
                          others=[self.backtest_params[keys.backtest_ccy]])
+            self.cascade('set_backtest_start_date',
+                         others=[self.backtest_params[keys.backtest_start_date]])
+            self.cascade('set_backtest_end_date',
+                         others=[self.backtest_params[keys.backtest_end_date]])
             self.is_compiled = True
 
     def update_database(self):

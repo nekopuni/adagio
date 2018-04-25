@@ -2,7 +2,8 @@ import unittest
 
 from adagio.utils.quandl import (exchange, year, futures_contract_name,
                                  futures_contract_month, next_fut_ticker,
-                                 to_yyyymm, is_generic_futures_ticker)
+                                 to_yyyymm, is_generic_futures_ticker,
+                                 get_tickers_from_db)
 
 
 class TestQuandl(unittest.TestCase):
@@ -41,3 +42,12 @@ class TestQuandl(unittest.TestCase):
         self.assertTrue(is_generic_futures_ticker('CME/N9'))
 
         self.assertFalse(is_generic_futures_ticker('CME/ESH2000'))
+
+    def test_get_tickers_from_db(self):
+        tickers = get_tickers_from_db('CME/ES')
+        self.assertEqual(tickers[0], 'CME/ESZ1997')
+
+        tickers = get_tickers_from_db('CME/ES', start_yyyymm=201703,
+                                      end_yyyymm=201712)
+        self.assertEqual(tickers[0], 'CME/ESH2017')
+        self.assertEqual(tickers[-1], 'CME/ESZ2017')

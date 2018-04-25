@@ -77,10 +77,13 @@ def is_generic_futures_ticker(generic_ticker):
         return False
 
 
-def get_tickers_from_db(generic_ticker):
+def get_tickers_from_db(generic_ticker, start_yyyymm=None, end_yyyymm=None):
     """ Return a sorted list of individual tickers for the given generic
+    Both start_yyyymm and end_yyyymm are inclusive
 
     :param generic_ticker: generic ticker such as CME/ES
+    :param start_yyyymm: int, start date (YYYYMM)
+    :param end_yyyymm: int, end date (YYYYMM)
     :return:
     """
     if not is_generic_futures_ticker(generic_ticker):
@@ -91,4 +94,9 @@ def get_tickers_from_db(generic_ticker):
     symbol_regex = QUANDL_TICKER_FORMAT.format(generic_ticker)
     all_tickers = library.list_symbols(regex=symbol_regex)
     all_tickers.sort(key=to_yyyymm)
+
+    if start_yyyymm is not None:
+        all_tickers = [i for i in all_tickers if to_yyyymm(i) >= start_yyyymm]
+    if end_yyyymm is not None:
+        all_tickers = [i for i in all_tickers if to_yyyymm(i) <= end_yyyymm]
     return all_tickers

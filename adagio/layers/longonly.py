@@ -130,6 +130,12 @@ class LongOnly(BaseBacktestObject):
         """ Propagate return currency to individual contract level """
         self[keys.backtest_ccy] = currency
 
+    def set_backtest_start_date(self, backtest_start_date):
+        self[keys.backtest_start_date] = backtest_start_date
+
+    def set_backtest_end_date(self, backtest_end_date):
+        self[keys.backtest_end_date] = backtest_end_date
+
 
 class LongOnlyQuandlFutures(LongOnly):
     def __init__(self, **backtest_params):
@@ -205,11 +211,19 @@ class LongOnlyQuandlFutures(LongOnly):
         """ Return a list of available futures contract objects """
         contracts = []
         start_date = None
+        if self[keys.backtest_start_date] is not None:
+            start_yyyymm = int(self[keys.backtest_start_date].strftime('%Y%m'))
+        else:
+            start_yyyymm = 190001
+
         if self[keys.is_spliced]:
-            all_tickers = _splice_func_map[self[keys.lo_ticker]]()
+            all_tickers = _splice_func_map[self[keys.lo_ticker]](
+                start_yyyymm=start_yyyymm
+            )
         else:
             all_tickers = get_tickers_from_db(self[keys.lo_ticker]
-                                              .replace('_', '/'))
+                                              .replace('_', '/'),
+                                              start_yyyymm=start_yyyymm)
 
         for idx, ticker in enumerate(all_tickers):
             # all tickers are instantiated regardless of nth_contract as
@@ -226,7 +240,21 @@ class LongOnlyQuandlFutures(LongOnly):
                 contract.backtest(start_date, end_date)
                 start_date = date_shift(end_date, '+1bd')
 
-        return contracts[(self[keys.nth_contract] - 1):]
+                # Trim position and data baed on backtest period
+                contract._trim_data()
+                if self[keys.backtest_end_date] is not None:
+                    if start_date > self[keys.backtest_end_date]:
+                        break
+
+        # Remove contracts that are not used
+        # For instance, if we want to use second contract,
+        # the very first contract is not necessary for the backtest
+        contracts = contracts[(self[keys.nth_contract] - 1):]
+
+        # Remove ones that are completely trimmed
+        contracts = [i for i in contracts if len(i.data) > 0]
+
+        return contracts
 
     def update_database(self):
         """ Update database if necessary for underlying contract objects """
@@ -259,17 +287,21 @@ class LongOnlyTrueFX(LongOnly):
         super(LongOnlyTrueFX, self).__init__(**backtest_params)
 
 
-def _get_spliced_symbols(lo_tickers, ranges):
+def _get_spliced_symbols(lo_tickers, ranges, start_yyyymm, end_yyyymm):
     """ Return a list of spliced tickers
 
     :param lo_tickers: list of lo_ticker
     :param ranges: list of list containing two yyyymm (both side including)
+    :param start_yyyymm: int, start date (YYYYMM)
+    :param end_yyyymm: int, end date (YYYYMM)
     :return:
     """
     if len(lo_tickers) != len(ranges):
         raise ValueError('Length mismatch. lo_tickers={}, ranges={}'
                          .format(lo_tickers, ranges))
-    all_symbols = [get_tickers_from_db(i) for i in lo_tickers]
+    all_symbols = [get_tickers_from_db(i, start_yyyymm=start_yyyymm,
+                                       end_yyyymm=end_yyyymm)
+                   for i in lo_tickers]
     result = []
     for symbols, range in zip(all_symbols, ranges):
         result += [s for s in symbols if range[0] <= to_yyyymm(s) <= range[1]]
@@ -278,22 +310,22 @@ def _get_spliced_symbols(lo_tickers, ranges):
 
 # wait for 1 year after the introduction of the new ticker before switching
 # to allow it to have enough data.
-def splice_es_and_sp():
+def splice_es_and_sp(start_yyyymm=None, end_yyyymm=None):
     lo_tickers = ['CME/SP', 'CME/ES']
     ranges = [[0, 199811], [199812, 999912]]
-    return _get_spliced_symbols(lo_tickers, ranges)
+    return _get_spliced_symbols(lo_tickers, ranges, start_yyyymm, end_yyyymm)
 
 
-def splice_nq_and_nd():
+def splice_nq_and_nd(start_yyyymm=None, end_yyyymm=None):
     lo_tickers = ['CME/ND', 'CME/NQ']
     ranges = [[0, 200008], [200009, 999912]]
-    return _get_spliced_symbols(lo_tickers, ranges)
+    return _get_spliced_symbols(lo_tickers, ranges, start_yyyymm, end_yyyymm)
 
 
-def splice_ym_and_dj():
+def splice_ym_and_dj(start_yyyymm=None, end_yyyymm=None):
     lo_tickers = ['CME/DJ', 'CME/YM']
     ranges = [[0, 201302], [201303, 999912]]
-    return _get_spliced_symbols(lo_tickers, ranges)
+    return _get_spliced_symbols(lo_tickers, ranges, start_yyyymm, end_yyyymm)
 
 
 _splice_func_map = {

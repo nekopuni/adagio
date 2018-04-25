@@ -268,6 +268,13 @@ class QuandlFutures(BaseBacktestObject):
                 cleaned_data)
         return cleaned_data
 
+    def _trim_data(self):
+        """ Trim underlying data based on the backtest period """
+        period = slice(self[keys.backtest_start_date],
+                       self[keys.backtest_end_date])
+        self.data = self.data.loc[period, :]
+        self.position = self.position.loc[period, :]
+
     def get_return_key(self):
         """ Return a column name used to be used for calculating returns """
         for return_key in RETURN_KEY_PRIORITY:
