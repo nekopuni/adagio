@@ -3,6 +3,7 @@ import numpy as np
 
 from .base import BaseBacktestObject
 from ..utils import keys
+from ..utils.array import is_flat_list
 from ..utils.date import data_asfreq
 from ..utils.logging import get_logger
 
@@ -52,6 +53,7 @@ class Signal(BaseBacktestObject):
 
         # signal calculation
         signal_method = self[keys.signal_method_params][keys.signal_method]
+        # todo accept arbitrary function for signal generation
         signal_func = signal_method_map[signal_method]
         signal = (signal_func(other, self.backtest_params)
                   .rename(self.name))
@@ -70,9 +72,11 @@ def signal_trend_ma_xover(other, config):
     """
     raw_returns = other.get_final_net_returns()
     signal_method_params = config[keys.signal_method_params]
+    windows = signal_method_params[keys.signal_windows]
+    if is_flat_list(windows):
+        windows = [windows]
     signal = pd.concat([signal_trend_ma_xover_single(raw_returns, *w)
-                        for w in signal_method_params[keys.signal_windows]],
-                       axis=1)
+                        for w in windows], axis=1)
 
     signal = (signal
               .mean(axis=1)
